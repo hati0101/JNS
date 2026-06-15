@@ -506,6 +506,19 @@ function fmtDate(dt) {
   return new Date(dt).toLocaleDateString("ko-KR", { year:"numeric", month:"2-digit", day:"2-digit" });
 }
 
+// ── Marked 초기화 (한 번만) ──
+marked.use({
+  renderer: {
+    image(token) {
+      const { href, text } = token;
+      if (/\.mp4(\?|$)/i.test(href)) {
+        return `<video controls src="${href}" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block"></video>`;
+      }
+      return `<img src="${href}" alt="${text}" loading="lazy" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block">`;
+    }
+  }
+});
+
 // ── Auth ──
 async function login() {
   const pw = $("pw-input").value;
@@ -574,18 +587,6 @@ async function loadPost(id) {
   $("post-title").textContent = post.title;
   $("post-date").textContent = fmtDate(post.created_at) + (post.updated_at !== post.created_at ? " (수정됨)" : "");
 
-  // 마크다운 → HTML (mp4 지원)
-  marked.use({
-    renderer: {
-      image(token) {
-        const { href, text } = token;
-        if (/\.mp4(\?|$)/i.test(href)) {
-          return `<video controls src="${href}" title="${escHtml(text)}" style="max-width:100%"></video>`;
-        }
-        return `<img src="${href}" alt="${escHtml(text)}" loading="lazy">`;
-      }
-    }
-  });
   $("post-body").innerHTML = marked.parse(post.content);
   if (typeof hljs !== "undefined") hljs.highlightAll();
 
