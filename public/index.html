@@ -290,6 +290,28 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 #title-input:focus { border-color: var(--accent); }
 #title-input::placeholder { color: var(--muted); font-weight: 300; }
 
+.editor-meta {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.editor-meta select, .editor-meta input[type="datetime-local"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .8rem;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color .15s;
+  flex: 1;
+}
+.editor-meta select:focus, .editor-meta input[type="datetime-local"]:focus {
+  border-color: var(--accent);
+}
+.editor-meta select option { background: var(--surface); }
+
 .editor-tabs {
   display: flex;
   gap: 0;
@@ -536,6 +558,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
         <button class="btn" onclick="showList()">취소</button>
       </div>
       <input type="text" id="title-input" placeholder="제목" oninput="scheduleDraftSave()">
+      <div class="editor-meta">
+        <select id="author-select">
+          <option value="마스터">마스터</option>
+          <option value="슬레이브">슬레이브</option>
+        </select>
+        <input type="datetime-local" id="date-input">
+      </div>
       <div class="editor-tabs">
         <button class="tab active" onclick="switchTab('write')" id="tab-write">작성</button>
         <button class="tab" onclick="switchTab('preview')" id="tab-preview">미리보기</button>
@@ -651,7 +680,7 @@ async function loadList(page = 1) {
   ul.innerHTML = data.posts.map(p => `
     <li class="post-item" onclick="loadPost(${p.id})">
       <span class="post-title">${escHtml(p.title)}</span>
-      <span class="post-date">${fmtDate(p.created_at)}</span>
+      <span class="post-date">${escHtml(p.author || "마스터")} · ${fmtDate(p.created_at)}</span>
     </li>
   `).join("");
 
@@ -675,7 +704,7 @@ async function loadPost(id) {
   const post = await res.json();
 
   $("post-title").textContent = post.title;
-  $("post-date").textContent = fmtDate(post.created_at) + (post.updated_at !== post.created_at ? " (수정됨)" : "");
+  $("post-date").textContent = `${post.author || "마스터"} · ${fmtDate(post.created_at)}` + (post.updated_at !== post.created_at ? " (수정됨)" : "");
 
   $("post-body").innerHTML = marked.parse(post.content);
   if (typeof hljs !== "undefined") hljs.highlightAll();
@@ -707,12 +736,22 @@ function showEditor(post = null) {
   $("content-input").style.display = "block";
   $("tab-write").className = "tab active";
   $("tab-preview").className = "tab";
+  // author
+  $("author-select").value = post?.author || "마스터";
+  // date: 기존 글이면 그 날짜, 새 글이면 지금
+  const dt = post?.created_at ? new Date(post.created_at) : new Date();
+  $("date-input").value = toLocalDatetimeInput(dt);
+
   mediaPanelLoaded = false;
   $("media-panel").classList.remove("open");
   showOnly("editor-view");
-  // 새 글일 때만 임시저장 체크
   if (!post) checkDraft();
   $("title-input").focus();
+}
+
+function toLocalDatetimeInput(dt) {
+  const pad = n => String(n).padStart(2, "0");
+  return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
 function switchTab(tab) {
@@ -740,10 +779,14 @@ async function savePost() {
   const method = editingId ? "PUT" : "POST";
   const url = editingId ? `/api/posts?id=${editingId}` : "/api/posts";
 
+  const author = $("author-select").value;
+  const dateVal = $("date-input").value; // datetime-local → ISO
+  const created_at = dateVal ? new Date(dateVal).toISOString().replace("T"," ").slice(0,19) : undefined;
+
   const res = await fetch(url, {
     method,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, content }),
+    body: JSON.stringify({ title, content, author, created_at }),
   });
 
   if (res.ok) {

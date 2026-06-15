@@ -1,9 +1,4 @@
 // functions/api/posts.js
-// GET  /api/posts          → 목록 (페이지네이션)
-// POST /api/posts          → 새 글 작성
-// GET  /api/posts/[id]     → 상세
-// PUT  /api/posts/[id]     → 수정
-// DELETE /api/posts/[id]  → 삭제
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -27,7 +22,7 @@ export async function onRequestGet({ request, env }) {
   const offset = (page - 1) * limit;
 
   const { results } = await env.DB.prepare(
-    "SELECT id, title, created_at FROM posts ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    "SELECT id, title, author, created_at FROM posts ORDER BY created_at DESC LIMIT ? OFFSET ?"
   ).bind(limit, offset).all();
 
   const { total } = await env.DB.prepare("SELECT COUNT(*) as total FROM posts").first();
@@ -36,12 +31,13 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
-  const { title, content } = await request.json().catch(() => ({}));
+  const { title, content, author, created_at } = await request.json().catch(() => ({}));
   if (!title?.trim() || !content?.trim()) return json({ error: "title and content required" }, 400);
 
+  const dt = created_at || new Date().toISOString().replace("T"," ").slice(0,19);
   const result = await env.DB.prepare(
-    "INSERT INTO posts (title, content) VALUES (?, ?) RETURNING id, created_at"
-  ).bind(title.trim(), content.trim()).first();
+    "INSERT INTO posts (title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id, created_at"
+  ).bind(title.trim(), content.trim(), author || "마스터", dt, dt).first();
 
   return json({ ok: true, ...result }, 201);
 }
@@ -51,12 +47,21 @@ export async function onRequestPut({ request, env }) {
   const id = url.searchParams.get("id");
   if (!id) return json({ error: "id required" }, 400);
 
-  const { title, content } = await request.json().catch(() => ({}));
+  const { title, content, author, created_at } = await request.json().catch(() => ({}));
   if (!title?.trim() || !content?.trim()) return json({ error: "title and content required" }, 400);
 
-  await env.DB.prepare(
-    "UPDATE posts SET title = ?, content = ?, updated_at = datetime('now') WHERE id = ?"
-  ).bind(title.trim(), content.trim(), id).run();
+  const now = new Date().toISOString().replace("T"," ").slice(0,19);
+  const dt = created_at || undefined;
+
+  if (dt) {
+    await env.DB.prepare(
+      "UPDATE posts SET title=?, content=?, author=?, created_at=?, updated_at=? WHERE id=?"
+    ).bind(title.trim(), content.trim(), author || "마스터", dt, now, id).run();
+  } else {
+    await env.DB.prepare(
+      "UPDATE posts SET title=?, content=?, author=?, updated_at=? WHERE id=?"
+    ).bind(title.trim(), content.trim(), author || "마스터", now, id).run();
+  }
 
   return json({ ok: true });
 }
