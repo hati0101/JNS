@@ -255,7 +255,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .post-body img {
   border-radius: 6px;
   max-width: 100%;
-  margin: 1.5em 0;
+  margin: 1.5em auto;
   display: block;
 }
 .post-body video {
@@ -514,7 +514,7 @@ marked.use({
       if (/\.mp4(\?|$)/i.test(src)) {
         return `<video controls src="${src}" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block"></video>`;
       }
-      return `<img src="${src}" alt="${text || ""}" loading="lazy" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block">`;
+      return `<img src="${src}" alt="${text || ""}" loading="lazy" style="max-width:100%;border-radius:6px;margin:1.5em auto;display:block">`;
     }
   }
 });
