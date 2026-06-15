@@ -9,8 +9,8 @@
 <!-- marked.js for markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
 <!-- highlight.js -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css">
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -587,7 +587,7 @@ async function loadPost(id) {
     }
   });
   $("post-body").innerHTML = marked.parse(post.content);
-  hljs.highlightAll();
+  if (typeof hljs !== "undefined") hljs.highlightAll();
 
   showOnly("post-view");
 }
@@ -625,7 +625,7 @@ function switchTab(tab) {
     $("content-input").style.display = "none";
     $("preview-pane").style.display = "block";
     $("preview-pane").innerHTML = marked.parse($("content-input").value || "");
-    hljs.highlightAll();
+    if (typeof hljs !== "undefined") hljs.highlightAll();
     $("tab-write").className = "tab";
     $("tab-preview").className = "tab active";
   } else {
