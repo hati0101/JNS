@@ -706,21 +706,36 @@ function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-// ── 초기 로드: 쿠키에 토큰 있으면 바로 앱 표시 ──
+// ── 초기 로드 ──
 (async () => {
-  const res = await fetch("/api/posts?page=1");
-  if (res.status !== 401) {
-    // 쿠키 유효 → 바로 앱
-    // (로그인 없이 GET은 통과하므로 진짜 체크는 POST/PUT/DELETE 시)
-    // 단순히 토큰 존재 여부 확인
-    const hasCookie = document.cookie.includes("token=");
-    if (hasCookie) {
+  if (document.cookie.includes("token=")) {
+    const res = await fetch("/api/posts?page=1");
+    if (res.ok) {
       $("login-screen").style.display = "none";
       $("app").style.display = "block";
       loadList();
+      return;
     }
+    document.cookie = "token=; Path=/; Max-Age=0";
   }
+  $("login-screen").style.display = "flex";
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
 </body>
 </html>
