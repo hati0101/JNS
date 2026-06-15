@@ -509,12 +509,12 @@ function fmtDate(dt) {
 // ── Marked 초기화 (한 번만) ──
 marked.use({
   renderer: {
-    image(token) {
-      const { href, text } = token;
-      if (/\.mp4(\?|$)/i.test(href)) {
-        return `<video controls src="${href}" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block"></video>`;
+    image({ href, title, text }) {
+      const src = href || title || "";
+      if (/\.mp4(\?|$)/i.test(src)) {
+        return `<video controls src="${src}" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block"></video>`;
       }
-      return `<img src="${href}" alt="${text}" loading="lazy" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block">`;
+      return `<img src="${src}" alt="${text || ""}" loading="lazy" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block">`;
     }
   }
 });
