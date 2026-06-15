@@ -739,8 +739,14 @@ function showEditor(post = null) {
   // author
   $("author-select").value = post?.author || "마스터";
   // date: 기존 글이면 그 날짜, 새 글이면 지금
-  const dt = post?.created_at ? new Date(post.created_at) : new Date();
-  $("date-input").value = toLocalDatetimeInput(dt);
+  // created_at은 KST 문자열로 저장됨 → 그대로 로컬 input에 표시
+  if (post?.created_at) {
+    $("date-input").value = post.created_at.slice(0,16).replace(" ","T");
+  } else {
+    // 새 글: 현재 KST 시각
+    const kstNow = new Date(Date.now() + 9*60*60*1000);
+    $("date-input").value = toLocalDatetimeInput(kstNow);
+  }
 
   mediaPanelLoaded = false;
   $("media-panel").classList.remove("open");
@@ -752,6 +758,13 @@ function showEditor(post = null) {
 function toLocalDatetimeInput(dt) {
   const pad = n => String(n).padStart(2, "0");
   return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+function nowKST() {
+  // KST = UTC+9
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().replace("T"," ").slice(0,19);
 }
 
 function switchTab(tab) {
@@ -780,8 +793,9 @@ async function savePost() {
   const url = editingId ? `/api/posts?id=${editingId}` : "/api/posts";
 
   const author = $("author-select").value;
-  const dateVal = $("date-input").value; // datetime-local → ISO
-  const created_at = dateVal ? new Date(dateVal).toISOString().replace("T"," ").slice(0,19) : undefined;
+  const dateVal = $("date-input").value; // datetime-local value는 로컬 시각 그대로
+  // KST 문자열로 저장 (브라우저 변환 없이 그대로)
+  const created_at = dateVal ? dateVal.replace("T"," ") : undefined;
 
   const res = await fetch(url, {
     method,

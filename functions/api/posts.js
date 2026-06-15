@@ -1,5 +1,10 @@
 // functions/api/posts.js
 
+function nowKST() {
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().replace("T"," ").slice(0,19);
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -34,7 +39,7 @@ export async function onRequestPost({ request, env }) {
   const { title, content, author, created_at } = await request.json().catch(() => ({}));
   if (!title?.trim() || !content?.trim()) return json({ error: "title and content required" }, 400);
 
-  const dt = created_at || new Date().toISOString().replace("T"," ").slice(0,19);
+  const dt = created_at || nowKST();
   const result = await env.DB.prepare(
     "INSERT INTO posts (title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id, created_at"
   ).bind(title.trim(), content.trim(), author || "마스터", dt, dt).first();
@@ -50,7 +55,7 @@ export async function onRequestPut({ request, env }) {
   const { title, content, author, created_at } = await request.json().catch(() => ({}));
   if (!title?.trim() || !content?.trim()) return json({ error: "title and content required" }, 400);
 
-  const now = new Date().toISOString().replace("T"," ").slice(0,19);
+  const now = nowKST();
   const dt = created_at || undefined;
 
   if (dt) {
