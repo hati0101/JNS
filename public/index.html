@@ -509,8 +509,8 @@ function fmtDate(dt) {
 // ── Marked 초기화 (한 번만) ──
 marked.use({
   renderer: {
-    image({ href, title, text }) {
-      const src = href || title || "";
+    image(href, title, text) {
+      const src = (typeof href === "object") ? (href.href || href.src || "") : (href || "");
       if (/\.mp4(\?|$)/i.test(src)) {
         return `<video controls src="${src}" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block"></video>`;
       }
