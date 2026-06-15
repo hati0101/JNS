@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>아키텍트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- marked.js for markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+<!-- highlight.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/highlight.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0e0e0f;
+  --surface: #161618;
+  --border: #2a2a2d;
+  --text: #e8e6e1;
+  --muted: #6b6b70;
+  --accent: #9b7fff;
+  --accent-dim: #9b7fff22;
+  --danger: #ff5f5f;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Noto Serif KR', serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  min-height: 100vh;
+  line-height: 1.7;
+}
+
+/* ── 로그인 ── */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 24px;
+}
+#login-screen h1 {
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: .3em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.login-box {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+}
+.login-box input {
+  background: var(--surface);
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .95rem;
+  padding: 12px 16px;
+  width: 240px;
+  outline: none;
+}
+.login-box input::placeholder { color: var(--muted); }
+.login-box button {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .85rem;
+  padding: 12px 20px;
+  transition: opacity .15s;
+}
+.login-box button:hover { opacity: .85; }
+#login-error {
+  color: var(--danger);
+  font-family: var(--mono);
+  font-size: .8rem;
+  min-height: 1em;
+}
+
+/* ── 앱 레이아웃 ── */
+#app { display: none; min-height: 100vh; }
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+.site-title {
+  font-size: .8rem;
+  letter-spacing: .25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+.site-title:hover { color: var(--text); }
+.header-actions { display: flex; gap: 12px; align-items: center; }
+.btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .78rem;
+  padding: 6px 14px;
+  transition: all .15s;
+  letter-spacing: .05em;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { opacity: .85; }
+.btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
+
+/* ── 글 목록 ── */
+#list-view {}
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 40px;
+}
+.list-header h2 {
+  font-size: 1rem;
+  font-weight: 300;
+  letter-spacing: .15em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.post-count { font-family: var(--mono); font-size: .75rem; color: var(--muted); }
+
+.post-list { list-style: none; }
+.post-item {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  transition: all .12s;
+}
+.post-item:hover .post-title { color: var(--accent); }
+.post-item:first-child { border-top: 1px solid var(--border); }
+.post-title {
+  font-size: 1rem;
+  font-weight: 400;
+  transition: color .12s;
+  flex: 1;
+}
+.post-date {
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 48px;
+}
+.page-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .75rem;
+  padding: 6px 12px;
+  transition: all .12s;
+}
+.page-btn:hover, .page-btn.active { border-color: var(--accent); color: var(--accent); }
+
+.empty-state {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: .85rem;
+}
+
+/* ── 글 상세 ── */
+#post-view { display: none; }
+.post-header { margin-bottom: 48px; }
+.post-header h1 { font-size: 1.8rem; font-weight: 600; line-height: 1.4; margin-bottom: 12px; }
+.post-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: .75rem;
+  color: var(--muted);
+}
+.post-actions { display: flex; gap: 8px; margin-left: auto; }
+
+.post-body { font-size: 1.05rem; line-height: 1.9; }
+.post-body h1, .post-body h2, .post-body h3 {
+  font-weight: 600;
+  margin: 2em 0 .6em;
+  line-height: 1.4;
+}
+.post-body h1 { font-size: 1.5rem; }
+.post-body h2 { font-size: 1.25rem; }
+.post-body h3 { font-size: 1.05rem; }
+.post-body p { margin: 1em 0; }
+.post-body ul, .post-body ol { margin: 1em 0 1em 1.5em; }
+.post-body li { margin: .3em 0; }
+.post-body blockquote {
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+  margin: 1.5em 0;
+  padding: .5em 1em;
+}
+.post-body code {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: .85em;
+  padding: .15em .4em;
+}
+.post-body pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  padding: 1.2em;
+}
+.post-body pre code {
+  background: none;
+  border: none;
+  font-size: .85rem;
+  padding: 0;
+}
+.post-body img {
+  border-radius: 6px;
+  max-width: 100%;
+  margin: 1.5em 0;
+  display: block;
+}
+.post-body video {
+  border-radius: 6px;
+  max-width: 100%;
+  margin: 1.5em 0;
+  display: block;
+}
+.post-body a { color: var(--accent); text-decoration: none; }
+.post-body a:hover { text-decoration: underline; }
+.post-body hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+
+/* ── 에디터 ── */
+#editor-view { display: none; }
+.editor-header { margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
+.editor-header h2 { font-size: .9rem; font-weight: 300; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; flex: 1; }
+
+#title-input {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  outline: none;
+  padding: 8px 0;
+  width: 100%;
+  margin-bottom: 24px;
+  transition: border-color .15s;
+}
+#title-input:focus { border-color: var(--accent); }
+#title-input::placeholder { color: var(--muted); font-weight: 300; }
+
+.editor-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.tab {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .78rem;
+  letter-spacing: .05em;
+  padding: 8px 16px;
+  border-bottom: 2px solid transparent;
+  transition: all .12s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.editor-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+}
+
+#content-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .9rem;
+  line-height: 1.8;
+  min-height: 480px;
+  outline: none;
+  padding: 24px;
+  resize: vertical;
+  width: 100%;
+}
+#content-input::placeholder { color: var(--muted); }
+
+#preview-pane {
+  display: none;
+  min-height: 480px;
+  padding: 24px;
+}
+
+/* 미디어 툴바 */
+.media-toolbar {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg);
+}
+.media-toolbar span {
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.upload-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .72rem;
+  padding: 4px 10px;
+  transition: all .12s;
+}
+.upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+#file-input { display: none; }
+#upload-status {
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.editor-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+/* ── 반응형 ── */
+@media (max-width: 600px) {
+  header { padding: 0 20px; }
+  main { padding: 40px 20px; }
+  .post-item { flex-direction: column; gap: 4px; }
+  .post-date { font-size: .68rem; }
+}
+
+/* ── 로딩/토스트 ── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .8rem;
+  padding: 10px 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 9999;
+}
+#toast.show { opacity: 1; }
+#toast.error { border-color: var(--danger); color: var(--danger); }
+</style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div id="login-screen">
+  <h1>아키텍트</h1>
+  <div class="login-box">
+    <input type="password" id="pw-input" placeholder="비밀번호" autocomplete="current-password">
+    <button onclick="login()">→</button>
+  </div>
+  <div id="login-error"></div>
+</div>
+
+<!-- 앱 -->
+<div id="app">
+  <header>
+    <span class="site-title" onclick="showList()">아키텍트 / 칼럼</span>
+    <div class="header-actions">
+      <button class="btn primary" onclick="showEditor()">새 글</button>
+      <button class="btn danger" onclick="logout()">로그아웃</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 목록 -->
+    <div id="list-view">
+      <div class="list-header">
+        <h2>칼럼</h2>
+        <span class="post-count" id="post-count"></span>
+      </div>
+      <ul class="post-list" id="post-list"></ul>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- 글 상세 -->
+    <div id="post-view">
+      <div class="post-header">
+        <h1 id="post-title"></h1>
+        <div class="post-meta">
+          <span id="post-date"></span>
+          <div class="post-actions">
+            <button class="btn" onclick="editCurrentPost()">수정</button>
+            <button class="btn danger" onclick="deleteCurrentPost()">삭제</button>
+          </div>
+        </div>
+      </div>
+      <div class="post-body" id="post-body"></div>
+    </div>
+
+    <!-- 에디터 -->
+    <div id="editor-view">
+      <div class="editor-header">
+        <h2 id="editor-title-label">새 글 작성</h2>
+        <button class="btn" onclick="showList()">취소</button>
+      </div>
+      <input type="text" id="title-input" placeholder="제목">
+      <div class="editor-tabs">
+        <button class="tab active" onclick="switchTab('write')" id="tab-write">작성</button>
+        <button class="tab" onclick="switchTab('preview')" id="tab-preview">미리보기</button>
+      </div>
+      <div class="editor-pane">
+        <textarea id="content-input" placeholder="마크다운으로 작성하세요&#10;&#10;이미지/영상은 하단 첨부 버튼을 사용하거나&#10;![설명](URL) 형식으로 직접 삽입할 수 있습니다."></textarea>
+        <div id="preview-pane" class="post-body"></div>
+        <div class="media-toolbar">
+          <span>미디어</span>
+          <button class="upload-btn" onclick="document.getElementById('file-input').click()">파일 첨부</button>
+          <input type="file" id="file-input" accept="image/*,video/mp4" multiple onchange="uploadFiles(this.files)">
+          <span id="upload-status"></span>
+        </div>
+      </div>
+      <div class="editor-footer">
+        <button class="btn primary" onclick="savePost()">저장</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──
+let currentPostId = null;
+let currentPage = 1;
+let editingId = null;
+
+// ── Helpers ──
+function $(id) { return document.getElementById(id); }
+
+function toast(msg, error = false) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.className = "show" + (error ? " error" : "");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = "", 2200);
+}
+
+function showOnly(viewId) {
+  ["list-view","post-view","editor-view"].forEach(id => {
+    $(id).style.display = id === viewId ? "block" : "none";
+  });
+}
+
+function fmtDate(dt) {
+  return new Date(dt).toLocaleDateString("ko-KR", { year:"numeric", month:"2-digit", day:"2-digit" });
+}
+
+// ── Auth ──
+async function login() {
+  const pw = $("pw-input").value;
+  const res = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: pw }),
+  });
+  if (res.ok) {
+    $("login-screen").style.display = "none";
+    $("app").style.display = "block";
+    loadList();
+  } else {
+    $("login-error").textContent = "비밀번호가 틀렸습니다.";
+    $("pw-input").value = "";
+  }
+}
+
+async function logout() {
+  await fetch("/api/auth", { method: "DELETE" });
+  location.reload();
+}
+
+$("pw-input").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+
+// ── 목록 ──
+async function loadList(page = 1) {
+  currentPage = page;
+  showOnly("list-view");
+  const res = await fetch(`/api/posts?page=${page}`);
+  const data = await res.json();
+
+  $("post-count").textContent = `총 ${data.total}편`;
+
+  const ul = $("post-list");
+  if (!data.posts?.length) {
+    ul.innerHTML = '<li class="empty-state">아직 작성된 글이 없습니다.</li>';
+    return;
+  }
+  ul.innerHTML = data.posts.map(p => `
+    <li class="post-item" onclick="loadPost(${p.id})">
+      <span class="post-title">${escHtml(p.title)}</span>
+      <span class="post-date">${fmtDate(p.created_at)}</span>
+    </li>
+  `).join("");
+
+  // 페이지네이션
+  const pg = $("pagination");
+  if (data.pages <= 1) { pg.innerHTML = ""; return; }
+  pg.innerHTML = Array.from({ length: data.pages }, (_, i) => i + 1)
+    .map(p => `<button class="page-btn ${p === page ? 'active' : ''}" onclick="loadList(${p})">${p}</button>`)
+    .join("");
+}
+
+function showList() {
+  editingId = null;
+  loadList(currentPage);
+}
+
+// ── 상세 ──
+async function loadPost(id) {
+  currentPostId = id;
+  const res = await fetch(`/api/posts?id=${id}`);
+  const post = await res.json();
+
+  $("post-title").textContent = post.title;
+  $("post-date").textContent = fmtDate(post.created_at) + (post.updated_at !== post.created_at ? " (수정됨)" : "");
+
+  // 마크다운 → HTML (mp4 지원)
+  marked.use({
+    renderer: {
+      image(token) {
+        const { href, text } = token;
+        if (/\.mp4(\?|$)/i.test(href)) {
+          return `<video controls src="${href}" title="${escHtml(text)}" style="max-width:100%"></video>`;
+        }
+        return `<img src="${href}" alt="${escHtml(text)}" loading="lazy">`;
+      }
+    }
+  });
+  $("post-body").innerHTML = marked.parse(post.content);
+  hljs.highlightAll();
+
+  showOnly("post-view");
+}
+
+function editCurrentPost() {
+  if (!currentPostId) return;
+  fetch(`/api/posts?id=${currentPostId}`)
+    .then(r => r.json())
+    .then(post => showEditor(post));
+}
+
+async function deleteCurrentPost() {
+  if (!confirm("삭제하시겠습니까?")) return;
+  await fetch(`/api/posts?id=${currentPostId}`, { method: "DELETE" });
+  toast("삭제되었습니다.");
+  showList();
+}
+
+// ── 에디터 ──
+function showEditor(post = null) {
+  editingId = post?.id || null;
+  $("editor-title-label").textContent = editingId ? "글 수정" : "새 글 작성";
+  $("title-input").value = post?.title || "";
+  $("content-input").value = post?.content || "";
+  $("preview-pane").style.display = "none";
+  $("content-input").style.display = "block";
+  $("tab-write").className = "tab active";
+  $("tab-preview").className = "tab";
+  showOnly("editor-view");
+  $("title-input").focus();
+}
+
+function switchTab(tab) {
+  if (tab === "preview") {
+    $("content-input").style.display = "none";
+    $("preview-pane").style.display = "block";
+    $("preview-pane").innerHTML = marked.parse($("content-input").value || "");
+    hljs.highlightAll();
+    $("tab-write").className = "tab";
+    $("tab-preview").className = "tab active";
+  } else {
+    $("content-input").style.display = "block";
+    $("preview-pane").style.display = "none";
+    $("tab-write").className = "tab active";
+    $("tab-preview").className = "tab";
+  }
+}
+
+async function savePost() {
+  const title = $("title-input").value.trim();
+  const content = $("content-input").value.trim();
+  if (!title) { toast("제목을 입력하세요", true); return; }
+  if (!content) { toast("내용을 입력하세요", true); return; }
+
+  const method = editingId ? "PUT" : "POST";
+  const url = editingId ? `/api/posts?id=${editingId}` : "/api/posts";
+
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, content }),
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    toast("저장되었습니다.");
+    const id = editingId || data.id;
+    editingId = null;
+    loadPost(id);
+  } else {
+    toast("저장 실패", true);
+  }
+}
+
+// ── 미디어 업로드 ──
+async function uploadFiles(files) {
+  if (!files.length) return;
+  $("upload-status").textContent = `업로드 중... (0/${files.length})`;
+
+  let done = 0;
+  const insertions = [];
+
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/media", { method: "POST", body: fd });
+    if (res.ok) {
+      const { url, filename } = await res.json();
+      const isVideo = file.type === "video/mp4";
+      // mp4 는 ![]() 형식으로 삽입 (커스텀 렌더러가 <video>로 변환)
+      insertions.push(isVideo
+        ? `\n![${filename}](${url})\n`
+        : `\n![${filename}](${url})\n`);
+      done++;
+      $("upload-status").textContent = `업로드 중... (${done}/${files.length})`;
+    } else {
+      toast(`${file.name} 업로드 실패`, true);
+    }
+  }
+
+  // 커서 위치에 삽입
+  const ta = $("content-input");
+  const pos = ta.selectionStart;
+  const val = ta.value;
+  const insert = insertions.join("");
+  ta.value = val.slice(0, pos) + insert + val.slice(pos);
+  ta.selectionStart = ta.selectionEnd = pos + insert.length;
+  ta.focus();
+
+  $("upload-status").textContent = `${done}개 완료`;
+  $("file-input").value = "";
+  setTimeout(() => { $("upload-status").textContent = ""; }, 3000);
+}
+
+function escHtml(s) {
+  return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── 초기 로드: 쿠키에 토큰 있으면 바로 앱 표시 ──
+(async () => {
+  const res = await fetch("/api/posts?page=1");
+  if (res.status !== 401) {
+    // 쿠키 유효 → 바로 앱
+    // (로그인 없이 GET은 통과하므로 진짜 체크는 POST/PUT/DELETE 시)
+    // 단순히 토큰 존재 여부 확인
+    const hasCookie = document.cookie.includes("token=");
+    if (hasCookie) {
+      $("login-screen").style.display = "none";
+      $("app").style.display = "block";
+      loadList();
+    }
+  }
+})();
+</script>
+</body>
+</html>

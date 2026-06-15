@@ -1,0 +1,16 @@
+name = "architect-column"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "architect-column-db"
+database_id = "YOUR_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "architect-column-media"
+
+[vars]
+# PASSWORD_HASH 는 Pages 대시보드 환경변수에서 설정
+# openssl rand -hex 32 로 JWT_SECRET 생성 후 Pages 대시보드에 등록
