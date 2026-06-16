@@ -481,6 +481,86 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   color: var(--muted);
   font-size: 1.8rem;
 }
+
+/* ── 형광펜 ── */
+.hl-mark {
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 2px;
+  position: relative;
+  transition: filter .12s;
+}
+.hl-mark:hover { filter: brightness(.85); }
+
+/* 색 선택 팝업 */
+#hl-popup {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  display: none;
+  gap: 6px;
+  padding: 10px;
+  position: fixed;
+  z-index: 9000;
+  flex-direction: column;
+  min-width: 200px;
+}
+#hl-popup.show { display: flex; }
+.hl-colors {
+  display: flex;
+  gap: 6px;
+}
+.hl-color-btn {
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  height: 22px;
+  width: 22px;
+  transition: transform .1s;
+}
+.hl-color-btn:hover { transform: scale(1.2); }
+.hl-color-btn.active { border-color: var(--text); }
+#hl-memo-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .78rem;
+  outline: none;
+  padding: 6px 8px;
+  resize: none;
+  width: 100%;
+  height: 60px;
+}
+#hl-memo-input:focus { border-color: var(--accent); }
+#hl-memo-input::placeholder { color: var(--muted); }
+.hl-popup-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* 메모 툴팁 */
+.hl-mark[data-memo]:not([data-memo=""])::after {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  bottom: calc(100% + 6px);
+  color: var(--text);
+  content: attr(data-memo);
+  display: none;
+  font-family: var(--mono);
+  font-size: .72rem;
+  left: 0;
+  max-width: 240px;
+  padding: 5px 8px;
+  position: absolute;
+  white-space: pre-wrap;
+  z-index: 100;
+  pointer-events: none;
+}
+.hl-mark[data-memo]:not([data-memo=""]):hover::after { display: block; }
 /* ── 로딩/토스트 ── */
 #toast {
   position: fixed;
@@ -596,6 +676,22 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   </main>
 </div>
 
+
+<div id="hl-popup">
+  <div class="hl-colors">
+    <div class="hl-color-btn" style="background:#ffeb3b" data-color="#ffeb3b" onclick="hlSelectColor('#ffeb3b')"></div>
+    <div class="hl-color-btn" style="background:#69f0ae" data-color="#69f0ae" onclick="hlSelectColor('#69f0ae')"></div>
+    <div class="hl-color-btn" style="background:#ff80ab" data-color="#ff80ab" onclick="hlSelectColor('#ff80ab')"></div>
+    <div class="hl-color-btn" style="background:#80d8ff" data-color="#80d8ff" onclick="hlSelectColor('#80d8ff')"></div>
+    <div class="hl-color-btn" style="background:#e040fb" data-color="#e040fb" onclick="hlSelectColor('#e040fb')"></div>
+  </div>
+  <textarea id="hl-memo-input" placeholder="메모 (선택사항)"></textarea>
+  <div class="hl-popup-actions">
+    <button class="btn danger" id="hl-delete-btn" style="display:none" onclick="hlDelete()">삭제</button>
+    <button class="btn" onclick="hlCancel()">취소</button>
+    <button class="btn primary" onclick="hlSave()">저장</button>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -710,6 +806,8 @@ async function loadPost(id) {
   if (typeof hljs !== "undefined") hljs.highlightAll();
 
   showOnly("post-view");
+  await loadHighlights(id);
+  setupHighlightSelection();
 }
 
 function editCurrentPost() {
@@ -953,6 +1051,173 @@ function insertMediaFromBucket(url, filename, type) {
   toast(`${type === "video" ? "영상" : "이미지"} 삽입됨`);
 }
 
+
+// ── 형광펜 ──
+const HL_COLORS = ["#ffeb3b","#69f0ae","#ff80ab","#80d8ff","#e040fb"];
+let hlState = {
+  postId: null,
+  highlights: [],       // DB에서 로드한 목록
+  selectedColor: "#ffeb3b",
+  editingId: null,      // 수정 중인 highlight id
+  pendingText: null,    // 새로 선택한 텍스트
+};
+
+async function loadHighlights(postId) {
+  hlState.postId = postId;
+  const res = await fetch(`/api/highlights?post_id=${postId}`);
+  if (!res.ok) return;
+  const { highlights } = await res.json();
+  hlState.highlights = highlights;
+  applyHighlights();
+}
+
+function applyHighlights() {
+  const body = $("post-body");
+  if (!body) return;
+
+  // 이미 적용된 mark 제거 후 재적용
+  body.querySelectorAll(".hl-mark").forEach(el => {
+    el.replaceWith(document.createTextNode(el.textContent));
+  });
+  body.normalize();
+
+  // 각 하이라이트 텍스트 찾아서 mark로 감싸기
+  hlState.highlights.forEach(hl => {
+    wrapTextInBody(body, hl.text, hl.id, hl.color, hl.memo || "");
+  });
+}
+
+function wrapTextInBody(root, searchText, hlId, color, memo) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) nodes.push(node);
+
+  for (const n of nodes) {
+    const idx = n.textContent.indexOf(searchText);
+    if (idx === -1) continue;
+
+    const before = n.textContent.slice(0, idx);
+    const after  = n.textContent.slice(idx + searchText.length);
+
+    const mark = document.createElement("mark");
+    mark.className = "hl-mark";
+    mark.style.background = color;
+    mark.dataset.hlId = hlId;
+    mark.dataset.memo = memo;
+    mark.textContent = searchText;
+    mark.onclick = (e) => { e.stopPropagation(); hlClickExisting(hlId); };
+
+    const frag = document.createDocumentFragment();
+    if (before) frag.appendChild(document.createTextNode(before));
+    frag.appendChild(mark);
+    if (after) frag.appendChild(document.createTextNode(after));
+
+    n.parentNode.replaceChild(frag, n);
+    break; // 첫 번째 매칭만
+  }
+}
+
+// 텍스트 드래그 후 마우스업
+function setupHighlightSelection() {
+  $("post-body").addEventListener("mouseup", (e) => {
+    if (e.target.closest(".hl-mark")) return; // 기존 하이라이트 클릭은 hlClickExisting에서 처리
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const text = sel.toString().trim();
+    if (!text || text.length < 2) return;
+
+    hlState.editingId = null;
+    hlState.pendingText = text;
+    hlSelectColor(hlState.selectedColor);
+    $("hl-memo-input").value = "";
+    $("hl-delete-btn").style.display = "none";
+    showHlPopup(e.clientX, e.clientY);
+    sel.removeAllRanges();
+  });
+
+  // 팝업 외부 클릭 시 닫기
+  document.addEventListener("mousedown", (e) => {
+    if (!e.target.closest("#hl-popup")) hlCancel();
+  });
+}
+
+function hlClickExisting(hlId) {
+  const hl = hlState.highlights.find(h => h.id === hlId);
+  if (!hl) return;
+  hlState.editingId = hlId;
+  hlState.pendingText = null;
+  hlSelectColor(hl.color);
+  $("hl-memo-input").value = hl.memo || "";
+  $("hl-delete-btn").style.display = "inline-block";
+
+  const mark = $("post-body").querySelector(`[data-hl-id="${hlId}"]`);
+  const rect = mark?.getBoundingClientRect() || { left: 200, bottom: 200 };
+  showHlPopup(rect.left, rect.bottom + 4);
+}
+
+function showHlPopup(x, y) {
+  const popup = $("hl-popup");
+  popup.classList.add("show");
+  // 뷰포트 범위 조정
+  const pw = popup.offsetWidth || 210;
+  const left = Math.min(x, window.innerWidth - pw - 12);
+  const top = Math.min(y + 6, window.innerHeight - 180);
+  popup.style.left = left + "px";
+  popup.style.top = top + "px";
+}
+
+function hlSelectColor(color) {
+  hlState.selectedColor = color;
+  document.querySelectorAll(".hl-color-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.color === color);
+  });
+}
+
+async function hlSave() {
+  const memo = $("hl-memo-input").value.trim();
+  const color = hlState.selectedColor;
+
+  if (hlState.editingId) {
+    // 수정
+    await fetch(`/api/highlights?id=${hlState.editingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memo, color }),
+    });
+    const hl = hlState.highlights.find(h => h.id === hlState.editingId);
+    if (hl) { hl.color = color; hl.memo = memo; }
+  } else {
+    // 새로 추가
+    const res = await fetch("/api/highlights", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ post_id: hlState.postId, text: hlState.pendingText, color, memo }),
+    });
+    if (res.ok) {
+      const { id } = await res.json();
+      hlState.highlights.push({ id, post_id: hlState.postId, text: hlState.pendingText, color, memo });
+    }
+  }
+
+  hlCancel();
+  applyHighlights();
+}
+
+async function hlDelete() {
+  if (!hlState.editingId) return;
+  if (!confirm("형광펜을 삭제하시겠습니까?")) return;
+  await fetch(`/api/highlights?id=${hlState.editingId}`, { method: "DELETE" });
+  hlState.highlights = hlState.highlights.filter(h => h.id !== hlState.editingId);
+  hlCancel();
+  applyHighlights();
+}
+
+function hlCancel() {
+  $("hl-popup").classList.remove("show");
+  hlState.editingId = null;
+  hlState.pendingText = null;
+}
 function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
