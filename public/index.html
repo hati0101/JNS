@@ -565,6 +565,34 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   z-index: 8000;
 }
 #hl-tooltip.show { display: block; }
+
+/* ── 모바일 형광펜 플로팅 버튼 ── */
+#hl-float-btn {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--accent);
+  border: none;
+  border-radius: 24px;
+  color: #fff;
+  cursor: pointer;
+  display: none;
+  font-family: var(--mono);
+  font-size: .85rem;
+  font-weight: 500;
+  opacity: 0;
+  padding: 10px 22px;
+  transition: opacity .2s, transform .2s;
+  z-index: 7000;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+#hl-float-btn.show {
+  display: block;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 /* ── 로딩/토스트 ── */
 #toast {
   position: fixed;
@@ -682,6 +710,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 
 
 <div id="hl-tooltip"></div>
+<button id="hl-float-btn" onclick="hlFloatTap()">✏ 형광펜</button>
 <div id="hl-popup">
   <div class="hl-colors">
     <div class="hl-color-btn" style="background:#ffeb3b" data-color="#ffeb3b" onclick="hlSelectColor('#ffeb3b')"></div>
@@ -1188,6 +1217,8 @@ function setupHighlightSelection() {
   document.addEventListener("mousedown", (e) => {
     if (!e.target.closest("#hl-popup")) hlCancel();
   });
+
+  setupMobileHighlight();
 }
 
 function hlClickExisting(hlId) {
@@ -1262,9 +1293,70 @@ async function hlDelete() {
 }
 
 function hlCancel() {
-  $("hl-popup").classList.remove("show");
+  const popup = $("hl-popup");
+  popup.classList.remove("show");
+  popup.style.transform = "";
+  popup.style.bottom = "";
   hlState.editingId = null;
   hlState.pendingText = null;
+  $("hl-float-btn").classList.remove("show");
+}
+
+// ── 모바일 형광펜 플로팅 버튼 ──
+let floatTimer = null;
+
+function isMobile() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
+function setupMobileHighlight() {
+  if (!isMobile()) return;
+
+  document.addEventListener("selectionchange", () => {
+    clearTimeout(floatTimer);
+    floatTimer = setTimeout(() => {
+      const sel = window.getSelection();
+      const text = sel?.toString().trim();
+      const btn = $("hl-float-btn");
+
+      // post-body 안의 선택인지 확인
+      const body = $("post-body");
+      if (!body || !text || text.length < 2) {
+        btn.classList.remove("show");
+        return;
+      }
+      if (!body.contains(sel.anchorNode)) {
+        btn.classList.remove("show");
+        return;
+      }
+
+      btn.classList.add("show");
+    }, 300);
+  });
+}
+
+function hlFloatTap() {
+  const sel = window.getSelection();
+  const text = sel?.toString().trim();
+  if (!text || text.length < 2) return;
+
+  hlState.editingId = null;
+  hlState.pendingText = text;
+  hlSelectColor(hlState.selectedColor);
+  $("hl-memo-input").value = "";
+  $("hl-delete-btn").style.display = "none";
+
+  // 팝업을 화면 중앙 하단에 표시
+  const popup = $("hl-popup");
+  popup.classList.add("show");
+  popup.style.left = "50%";
+  popup.style.transform = "translateX(-50%)";
+  popup.style.top = "auto";
+  popup.style.bottom = "20px";
+  popup.style.position = "fixed";
+
+  sel.removeAllRanges();
+  $("hl-float-btn").classList.remove("show");
 }
 function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
