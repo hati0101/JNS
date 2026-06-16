@@ -558,7 +558,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   max-width: 360px;
   min-width: 180px;
   padding: 10px 14px;
-  pointer-events: none;
+  pointer-events: auto;
   position: fixed;
   white-space: pre-wrap;
   width: max-content;
@@ -1125,29 +1125,47 @@ function wrapTextInBody(root, searchText, hlId, color, memo) {
 
 // 텍스트 드래그 후 마우스업
 function setupHighlightSelection() {
-  // 메모 툴팁 hover
-  $("post-body").addEventListener("mouseover", (e) => {
+  // 메모 툴팁 - 클릭 토글 (모바일/데스크탑 공통)
+  $("post-body").addEventListener("click", (e) => {
     const mark = e.target.closest(".hl-mark");
     const tip = $("hl-tooltip");
-    if (mark && mark.dataset.memo) {
-      tip.textContent = mark.dataset.memo;
-      tip.classList.add("show");
+
+    if (!mark || !mark.dataset.memo) {
+      tip.classList.remove("show");
+      return;
     }
+
+    // 이미 같은 mark 클릭 시 닫기
+    if (tip.classList.contains("show") && tip._mark === mark) {
+      tip.classList.remove("show");
+      tip._mark = null;
+      return;
+    }
+
+    tip.textContent = mark.dataset.memo;
+    tip._mark = mark;
+    tip.classList.add("show");
+
+    // 위치: mark 기준으로 위쪽, 뷰포트 벗어나면 아래
+    const rect = mark.getBoundingClientRect();
+    requestAnimationFrame(() => {
+      const tw = tip.offsetWidth;
+      const th = tip.offsetHeight;
+      let x = rect.left;
+      let y = rect.top - th - 8;
+      if (x + tw > window.innerWidth - 12) x = window.innerWidth - tw - 12;
+      if (x < 8) x = 8;
+      if (y < 8) y = rect.bottom + 8;
+      tip.style.left = x + "px";
+      tip.style.top  = y + "px";
+    });
   });
-  $("post-body").addEventListener("mousemove", (e) => {
-    const tip = $("hl-tooltip");
-    if (!tip.classList.contains("show")) return;
-    const tw = tip.offsetWidth;
-    const th = tip.offsetHeight;
-    let x = e.clientX + 12;
-    let y = e.clientY - th - 10;
-    if (x + tw > window.innerWidth - 12) x = e.clientX - tw - 12;
-    if (y < 8) y = e.clientY + 16;
-    tip.style.left = x + "px";
-    tip.style.top  = y + "px";
-  });
-  $("post-body").addEventListener("mouseout", (e) => {
-    if (!e.target.closest(".hl-mark")) $("hl-tooltip").classList.remove("show");
+
+  // 툴팁 외부 클릭 시 닫기
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".hl-mark") && !e.target.closest("#hl-tooltip")) {
+      $("hl-tooltip").classList.remove("show");
+    }
   });
 
   $("post-body").addEventListener("mouseup", (e) => {
