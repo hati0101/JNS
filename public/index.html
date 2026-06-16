@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>아키텍트</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0e0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JNS">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- marked.js for markdown -->
@@ -1402,6 +1408,11 @@ function hlFloatTap() {
 }
 function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── 서비스워커 등록 ──
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
 // ── 초기 로드 ──
