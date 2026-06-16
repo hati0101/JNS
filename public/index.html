@@ -1246,19 +1246,22 @@ function hlClickExisting(hlId) {
   const mark = $("post-body").querySelector(`[data-hl-id="${hlId}"]`);
   const rect = mark?.getBoundingClientRect() || { left: 200, bottom: 200 };
 
+  // 모바일/데스크탑 모두 보기모드 먼저
+  $("hl-view-mode").style.display = "block";
+  $("hl-edit-mode").style.display = "none";
+  $("hl-view-memo").textContent = hl.memo || "(메모 없음)";
+  $("hl-view-memo").style.color = hl.memo ? "var(--text)" : "var(--muted)";
+
   if (isMobile()) {
-    // 모바일: 바로 편집모드
-    $("hl-view-mode").style.display = "none";
-    $("hl-edit-mode").style.display = "block";
-    $("hl-memo-input").value = hl.memo || "";
-    $("hl-delete-btn").style.display = "inline-block";
-    showHlPopup(rect.left, rect.bottom + 4);
+    // 모바일: 화면 하단 중앙
+    const popup = $("hl-popup");
+    popup.classList.add("show");
+    popup.style.left = "50%";
+    popup.style.transform = "translateX(-50%)";
+    popup.style.top = "auto";
+    popup.style.bottom = "20px";
+    popup.style.position = "fixed";
   } else {
-    // 데스크탑: 보기모드 먼저
-    $("hl-view-mode").style.display = "block";
-    $("hl-edit-mode").style.display = "none";
-    $("hl-view-memo").textContent = hl.memo || "(메모 없음)";
-    $("hl-view-memo").style.color = hl.memo ? "var(--text)" : "var(--muted)";
     showHlPopup(rect.left, rect.bottom + 4);
   }
 }
