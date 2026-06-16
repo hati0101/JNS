@@ -504,7 +504,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   position: fixed;
   z-index: 9000;
   flex-direction: column;
-  min-width: 200px;
+  min-width: 280px;
 }
 #hl-popup.show { display: flex; }
 .hl-colors {
@@ -526,12 +526,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   border: 1px solid var(--border);
   color: var(--text);
   font-family: var(--mono);
-  font-size: .78rem;
+  font-size: .82rem;
   outline: none;
-  padding: 6px 8px;
-  resize: none;
+  padding: 10px 12px;
+  resize: vertical;
   width: 100%;
-  height: 60px;
+  height: 120px;
+  line-height: 1.7;
 }
 #hl-memo-input:focus { border-color: var(--accent); }
 #hl-memo-input::placeholder { color: var(--muted); }
@@ -712,18 +713,30 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 <div id="hl-tooltip"></div>
 <button id="hl-float-btn" onclick="hlFloatTap()">✏ 형광펜</button>
 <div id="hl-popup">
-  <div class="hl-colors">
-    <div class="hl-color-btn" style="background:#ffeb3b" data-color="#ffeb3b" onclick="hlSelectColor('#ffeb3b')"></div>
-    <div class="hl-color-btn" style="background:#69f0ae" data-color="#69f0ae" onclick="hlSelectColor('#69f0ae')"></div>
-    <div class="hl-color-btn" style="background:#ff80ab" data-color="#ff80ab" onclick="hlSelectColor('#ff80ab')"></div>
-    <div class="hl-color-btn" style="background:#80d8ff" data-color="#80d8ff" onclick="hlSelectColor('#80d8ff')"></div>
-    <div class="hl-color-btn" style="background:#e040fb" data-color="#e040fb" onclick="hlSelectColor('#e040fb')"></div>
+  <!-- 보기 모드 -->
+  <div id="hl-view-mode" style="display:none">
+    <div id="hl-view-memo" style="font-family:var(--mono);font-size:.82rem;color:var(--text);line-height:1.7;white-space:pre-wrap;min-height:1em"></div>
+    <div class="hl-popup-actions" style="margin-top:10px">
+      <button class="btn danger" onclick="hlDelete()">삭제</button>
+      <button class="btn" onclick="hlCancel()">닫기</button>
+      <button class="btn primary" onclick="hlSwitchToEdit()">수정</button>
+    </div>
   </div>
-  <textarea id="hl-memo-input" placeholder="메모 (선택사항)"></textarea>
-  <div class="hl-popup-actions">
-    <button class="btn danger" id="hl-delete-btn" style="display:none" onclick="hlDelete()">삭제</button>
-    <button class="btn" onclick="hlCancel()">취소</button>
-    <button class="btn primary" onclick="hlSave()">저장</button>
+  <!-- 편집 모드 -->
+  <div id="hl-edit-mode">
+    <div class="hl-colors">
+      <div class="hl-color-btn" style="background:#ffeb3b" data-color="#ffeb3b" onclick="hlSelectColor('#ffeb3b')"></div>
+      <div class="hl-color-btn" style="background:#69f0ae" data-color="#69f0ae" onclick="hlSelectColor('#69f0ae')"></div>
+      <div class="hl-color-btn" style="background:#ff80ab" data-color="#ff80ab" onclick="hlSelectColor('#ff80ab')"></div>
+      <div class="hl-color-btn" style="background:#80d8ff" data-color="#80d8ff" onclick="hlSelectColor('#80d8ff')"></div>
+      <div class="hl-color-btn" style="background:#e040fb" data-color="#e040fb" onclick="hlSelectColor('#e040fb')"></div>
+    </div>
+    <textarea id="hl-memo-input" placeholder="메모 (선택사항)"></textarea>
+    <div class="hl-popup-actions">
+      <button class="btn danger" id="hl-delete-btn" style="display:none" onclick="hlDelete()">삭제</button>
+      <button class="btn" onclick="hlCancel()">취소</button>
+      <button class="btn primary" onclick="hlSave()">저장</button>
+    </div>
   </div>
 </div>
 <div id="toast"></div>
@@ -1207,6 +1220,8 @@ function setupHighlightSelection() {
     hlState.editingId = null;
     hlState.pendingText = text;
     hlSelectColor(hlState.selectedColor);
+    $("hl-view-mode").style.display = "none";
+    $("hl-edit-mode").style.display = "block";
     $("hl-memo-input").value = "";
     $("hl-delete-btn").style.display = "none";
     showHlPopup(e.clientX, e.clientY);
@@ -1227,12 +1242,34 @@ function hlClickExisting(hlId) {
   hlState.editingId = hlId;
   hlState.pendingText = null;
   hlSelectColor(hl.color);
-  $("hl-memo-input").value = hl.memo || "";
-  $("hl-delete-btn").style.display = "inline-block";
 
   const mark = $("post-body").querySelector(`[data-hl-id="${hlId}"]`);
   const rect = mark?.getBoundingClientRect() || { left: 200, bottom: 200 };
-  showHlPopup(rect.left, rect.bottom + 4);
+
+  if (isMobile()) {
+    // 모바일: 바로 편집모드
+    $("hl-view-mode").style.display = "none";
+    $("hl-edit-mode").style.display = "block";
+    $("hl-memo-input").value = hl.memo || "";
+    $("hl-delete-btn").style.display = "inline-block";
+    showHlPopup(rect.left, rect.bottom + 4);
+  } else {
+    // 데스크탑: 보기모드 먼저
+    $("hl-view-mode").style.display = "block";
+    $("hl-edit-mode").style.display = "none";
+    $("hl-view-memo").textContent = hl.memo || "(메모 없음)";
+    $("hl-view-memo").style.color = hl.memo ? "var(--text)" : "var(--muted)";
+    showHlPopup(rect.left, rect.bottom + 4);
+  }
+}
+
+function hlSwitchToEdit() {
+  const hl = hlState.highlights.find(h => h.id === hlState.editingId);
+  $("hl-view-mode").style.display = "none";
+  $("hl-edit-mode").style.display = "block";
+  $("hl-memo-input").value = hl?.memo || "";
+  $("hl-delete-btn").style.display = "inline-block";
+  $("hl-memo-input").focus();
 }
 
 function showHlPopup(x, y) {
@@ -1343,6 +1380,8 @@ function hlFloatTap() {
   hlState.editingId = null;
   hlState.pendingText = text;
   hlSelectColor(hlState.selectedColor);
+  $("hl-view-mode").style.display = "none";
+  $("hl-edit-mode").style.display = "block";
   $("hl-memo-input").value = "";
   $("hl-delete-btn").style.display = "none";
 
