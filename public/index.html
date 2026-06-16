@@ -765,10 +765,16 @@ function toast(msg, error = false) {
   el._t = setTimeout(() => el.className = "", 2200);
 }
 
-function showOnly(viewId) {
+function showOnly(viewId, pushHistory = true) {
   ["list-view","post-view","editor-view"].forEach(id => {
     $(id).style.display = id === viewId ? "block" : "none";
   });
+  if (pushHistory) {
+    const state = { view: viewId, postId: currentPostId, page: currentPage };
+    if (viewId === "list-view") history.pushState(state, "", `/?page=${currentPage}`);
+    else if (viewId === "post-view") history.pushState(state, "", `/?post=${currentPostId}`);
+    else if (viewId === "editor-view") history.pushState(state, "", "/?write");
+  }
 }
 
 function fmtDate(dt) {
@@ -848,7 +854,7 @@ function showList() {
 }
 
 // ── 상세 ──
-async function loadPost(id) {
+async function loadPost(id, pushHistory = true) {
   currentPostId = id;
   const res = await fetch(`/api/posts?id=${id}`);
   const post = await res.json();
@@ -859,7 +865,7 @@ async function loadPost(id) {
   $("post-body").innerHTML = marked.parse(post.content);
   if (typeof hljs !== "undefined") hljs.highlightAll();
 
-  showOnly("post-view");
+  showOnly("post-view", pushHistory);
   await loadHighlights(id);
   setupHighlightSelection();
 }
@@ -1410,6 +1416,23 @@ function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+
+// ── 뒤로가기 처리 ──
+window.addEventListener("popstate", (e) => {
+  const state = e.state;
+  if (!state) { showOnly("list-view", false); loadList(1); return; }
+
+  if (state.view === "list-view") {
+    showOnly("list-view", false);
+    loadList(state.page || 1);
+  } else if (state.view === "post-view" && state.postId) {
+    currentPostId = state.postId;
+    loadPost(state.postId, false);
+  } else {
+    showOnly("list-view", false);
+    loadList(1);
+  }
+});
 // ── 서비스워커 등록 ──
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -1422,7 +1445,18 @@ if ("serviceWorker" in navigator) {
     if (res.ok) {
       $("login-screen").style.display = "none";
       $("app").style.display = "block";
-      loadList();
+      // URL 파라미터로 초기 뷰 결정
+      const params = new URLSearchParams(location.search);
+      const postId = params.get("post");
+      const page = parseInt(params.get("page") || "1");
+      if (postId) {
+        currentPostId = parseInt(postId);
+        await loadPost(currentPostId, false);
+      } else {
+        await loadList(page);
+      }
+      // 초기 히스토리 교체
+      history.replaceState({ view: postId ? "post-view" : "list-view", postId: currentPostId, page }, "", location.href);
       return;
     }
     document.cookie = "token=; Path=/; Max-Age=0";
