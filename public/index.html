@@ -543,22 +543,26 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 
 /* 메모 툴팁 */
 .hl-mark[data-memo]:not([data-memo=""])::after {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #1e1e22;
+  border: 1px solid #444;
   border-radius: 4px;
   bottom: calc(100% + 6px);
-  color: var(--text);
+  color: #f0ede8;
   content: attr(data-memo);
   display: none;
-  font-family: var(--mono);
-  font-size: .72rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem;
+  font-weight: 500;
   left: 0;
-  max-width: 240px;
-  padding: 5px 8px;
+  max-width: 260px;
+  padding: 7px 10px;
   position: absolute;
   white-space: pre-wrap;
   z-index: 100;
   pointer-events: none;
+  line-height: 1.6;
+  letter-spacing: .01em;
+  box-shadow: 0 4px 16px rgba(0,0,0,.6);
 }
 .hl-mark[data-memo]:not([data-memo=""]):hover::after { display: block; }
 /* ── 로딩/토스트 ── */
