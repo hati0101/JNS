@@ -601,6 +601,72 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ── 형광펜 댓글 ── */
+#hl-comments-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 8px;
+  display: none;
+}
+#hl-comments-section.open { display: block; }
+.hl-comment-list { list-style: none; margin-bottom: 8px; }
+.hl-comment-item {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 7px 0;
+  font-family: var(--mono);
+  font-size: .78rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.hl-comment-item:last-child { border-bottom: none; }
+.hl-comment-text { flex: 1; white-space: pre-wrap; }
+.hl-comment-date { color: var(--muted); font-size: .68rem; white-space: nowrap; flex-shrink: 0; }
+.hl-comment-del {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .75rem;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.hl-comment-del:hover { color: var(--danger); }
+.hl-comment-input-row {
+  display: flex;
+  gap: 6px;
+}
+#hl-comment-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .78rem;
+  flex: 1;
+  outline: none;
+  padding: 6px 10px;
+  resize: none;
+  height: 60px;
+  line-height: 1.6;
+}
+#hl-comment-input:focus { border-color: var(--accent); }
+#hl-comment-input::placeholder { color: var(--muted); }
+.hl-comment-submit {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .75rem;
+  padding: 0 12px;
+  transition: opacity .12s;
+  align-self: stretch;
+}
+.hl-comment-submit:hover { opacity: .85; }
 /* ── 로딩/토스트 ── */
 #toast {
   position: fixed;
@@ -726,7 +792,16 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
     <div class="hl-popup-actions" style="margin-top:10px">
       <button class="btn danger" onclick="hlDelete()">삭제</button>
       <button class="btn" onclick="hlCancel()">닫기</button>
+      <button class="btn" onclick="hlToggleComments()">댓글</button>
       <button class="btn primary" onclick="hlSwitchToEdit()">수정</button>
+    </div>
+    <!-- 댓글 섹션 -->
+    <div id="hl-comments-section">
+      <ul class="hl-comment-list" id="hl-comment-list"></ul>
+      <div class="hl-comment-input-row">
+        <textarea id="hl-comment-input" placeholder="댓글 입력..."></textarea>
+        <button class="hl-comment-submit" onclick="hlCommentSubmit()">↑</button>
+      </div>
     </div>
   </div>
   <!-- 편집 모드 -->
@@ -1264,6 +1339,9 @@ function hlClickExisting(hlId) {
   $("hl-edit-mode").style.display = "none";
   $("hl-view-memo").textContent = hl.memo || "(메모 없음)";
   $("hl-view-memo").style.color = hl.memo ? "var(--text)" : "var(--muted)";
+  $("hl-comments-section").classList.remove("open");
+  $("hl-comment-list").innerHTML = "";
+  $("hl-comment-input").value = "";
 
   showHlPopup(rect.left, rect.bottom + 4);
 }
@@ -1412,6 +1490,67 @@ function hlFloatTap() {
   $("hl-float-btn").classList.remove("show");
   showHlPopup(rect2.left, rect2.bottom + 4);
 }
+
+// ── 형광펜 댓글 ──
+async function hlToggleComments() {
+  const section = $("hl-comments-section");
+  if (section.classList.contains("open")) {
+    section.classList.remove("open");
+    return;
+  }
+  section.classList.add("open");
+  await hlLoadComments();
+  $("hl-comment-input").focus();
+}
+
+async function hlLoadComments() {
+  const id = hlState.editingId;
+  if (!id) return;
+  const res = await fetch(`/api/highlight-comments?highlight_id=${id}`);
+  if (!res.ok) return;
+  const { comments } = await res.json();
+
+  const ul = $("hl-comment-list");
+  if (!comments.length) {
+    ul.innerHTML = '<li style="font-family:var(--mono);font-size:.75rem;color:var(--muted);padding:6px 0">아직 댓글이 없습니다.</li>';
+    return;
+  }
+  ul.innerHTML = comments.map(c => `
+    <li class="hl-comment-item">
+      <span class="hl-comment-text">${escHtml(c.content)}</span>
+      <span class="hl-comment-date">${fmtDate(c.created_at)}</span>
+      <button class="hl-comment-del" onclick="hlCommentDelete(${c.id})" title="삭제">×</button>
+    </li>
+  `).join("");
+}
+
+async function hlCommentSubmit() {
+  const input = $("hl-comment-input");
+  const content = input.value.trim();
+  if (!content) return;
+  const highlight_id = hlState.editingId;
+  if (!highlight_id) return;
+
+  const res = await fetch("/api/highlight-comments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ highlight_id, content }),
+  });
+
+  if (res.ok) {
+    input.value = "";
+    await hlLoadComments();
+  } else {
+    toast("댓글 저장 실패", true);
+  }
+}
+
+async function hlCommentDelete(id) {
+  if (!confirm("댓글을 삭제하시겠습니까?")) return;
+  await fetch(`/api/highlight-comments?id=${id}`, { method: "DELETE" });
+  await hlLoadComments();
+}
+
 function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
@@ -1433,6 +1572,16 @@ window.addEventListener("popstate", (e) => {
     loadList(1);
   }
 });
+// ── 댓글 입력 단축키 ──
+document.addEventListener("keydown", (e) => {
+  if ($("hl-comment-input") === document.activeElement) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      hlCommentSubmit();
+    }
+  }
+});
+
 // ── 서비스워커 등록 ──
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
