@@ -667,6 +667,21 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   align-self: stretch;
 }
 .hl-comment-submit:hover { opacity: .85; }
+
+/* ── 형광펜 댓글 뱃지 ── */
+.hl-mark .hl-badge {
+  background: var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: .6rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: 3px;
+  padding: 1px 5px;
+  vertical-align: super;
+  pointer-events: none;
+}
 /* ── 로딩/토스트 ── */
 #toast {
   position: fixed;
@@ -1218,11 +1233,11 @@ function applyHighlights() {
 
   // 각 하이라이트 텍스트 찾아서 mark로 감싸기
   hlState.highlights.forEach(hl => {
-    wrapTextInBody(body, hl.text, hl.id, hl.color, hl.memo || "");
+    wrapTextInBody(body, hl.text, hl.id, hl.color, hl.memo || "", hl.comment_count || 0);
   });
 }
 
-function wrapTextInBody(root, searchText, hlId, color, memo) {
+function wrapTextInBody(root, searchText, hlId, color, memo, commentCount) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = [];
   let node;
@@ -1240,7 +1255,16 @@ function wrapTextInBody(root, searchText, hlId, color, memo) {
     mark.style.background = color;
     mark.dataset.hlId = hlId;
     mark.dataset.memo = memo;
-    mark.textContent = searchText;
+    mark.appendChild(document.createTextNode(searchText));
+
+    // 댓글 있으면 뱃지 추가
+    if (commentCount > 0) {
+      const badge = document.createElement("span");
+      badge.className = "hl-badge";
+      badge.textContent = commentCount;
+      mark.appendChild(badge);
+    }
+
     mark.onclick = (e) => { e.stopPropagation(); hlClickExisting(hlId); };
 
     const frag = document.createDocumentFragment();
@@ -1249,7 +1273,7 @@ function wrapTextInBody(root, searchText, hlId, color, memo) {
     if (after) frag.appendChild(document.createTextNode(after));
 
     n.parentNode.replaceChild(frag, n);
-    break; // 첫 번째 매칭만
+    break;
   }
 }
 
@@ -1540,6 +1564,7 @@ async function hlCommentSubmit() {
   if (res.ok) {
     input.value = "";
     await hlLoadComments();
+    hlUpdateBadge(highlight_id);
   } else {
     toast("댓글 저장 실패", true);
   }
@@ -1549,6 +1574,35 @@ async function hlCommentDelete(id) {
   if (!confirm("댓글을 삭제하시겠습니까?")) return;
   await fetch(`/api/highlight-comments?id=${id}`, { method: "DELETE" });
   await hlLoadComments();
+  hlUpdateBadge(hlState.editingId);
+}
+
+function hlUpdateBadge(hlId) {
+  const mark = $("post-body")?.querySelector(`[data-hl-id="${hlId}"]`);
+  if (!mark) return;
+  const hl = hlState.highlights.find(h => h.id === hlId);
+  if (!hl) return;
+
+  // 댓글 수 다시 fetch
+  fetch(`/api/highlight-comments?highlight_id=${hlId}`)
+    .then(r => r.json())
+    .then(({ comments }) => {
+      hl.comment_count = comments.length;
+      // 뱃지 업데이트
+      const existing = mark.querySelector(".hl-badge");
+      if (comments.length > 0) {
+        if (existing) {
+          existing.textContent = comments.length;
+        } else {
+          const badge = document.createElement("span");
+          badge.className = "hl-badge";
+          badge.textContent = comments.length;
+          mark.appendChild(badge);
+        }
+      } else if (existing) {
+        existing.remove();
+      }
+    });
 }
 
 function escHtml(s) {

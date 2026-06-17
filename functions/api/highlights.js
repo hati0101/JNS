@@ -16,9 +16,14 @@ export async function onRequestGet({ request, env }) {
   const post_id = url.searchParams.get("post_id");
   if (!post_id) return json({ error: "post_id required" }, 400);
 
-  const { results } = await env.DB.prepare(
-    "SELECT * FROM highlights WHERE post_id = ? ORDER BY created_at ASC"
-  ).bind(post_id).all();
+  const { results } = await env.DB.prepare(`
+    SELECT h.*, COUNT(c.id) as comment_count
+    FROM highlights h
+    LEFT JOIN highlight_comments c ON c.highlight_id = h.id
+    WHERE h.post_id = ?
+    GROUP BY h.id
+    ORDER BY h.created_at ASC
+  `).bind(post_id).all();
 
   return json({ highlights: results });
 }
