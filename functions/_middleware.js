@@ -8,6 +8,7 @@ export async function onRequest({ request, env, next }) {
   if (request.method === "GET" && url.pathname === "/api/posts") return next();
   if (request.method === "GET" && url.pathname === "/api/highlights") return next();
   if (request.method === "GET" && url.pathname === "/api/highlight-comments") return next();
+  if (request.method === "GET" && url.pathname === "/api/media-comments") return next();
 
   const cookie = request.headers.get("Cookie") || "";
   const token = cookie.match(/token=([^;]+)/)?.[1]

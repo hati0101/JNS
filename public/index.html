@@ -682,6 +682,97 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   vertical-align: super;
   pointer-events: none;
 }
+
+/* ── 미디어 댓글 ── */
+.media-comment-box {
+  border: 1px solid var(--border);
+  border-top: none;
+  margin-bottom: 1.5em;
+}
+.media-comment-toggle {
+  background: var(--surface);
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .75rem;
+  padding: 6px 14px;
+  width: 100%;
+  text-align: left;
+  transition: color .12s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.media-comment-toggle:hover { color: var(--accent); }
+.media-comment-toggle .mc-count {
+  background: var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 1px 7px;
+}
+.media-comment-panel {
+  display: none;
+  background: var(--bg);
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+.media-comment-panel.open { display: block; }
+.mc-list { list-style: none; margin-bottom: 8px; }
+.mc-item {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 7px 0;
+  font-family: var(--mono);
+  font-size: .78rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.mc-item:last-child { border-bottom: none; }
+.mc-text { flex: 1; white-space: pre-wrap; }
+.mc-date { color: var(--muted); font-size: .68rem; white-space: nowrap; flex-shrink: 0; }
+.mc-del {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .75rem;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.mc-del:hover { color: var(--danger); }
+.mc-input-row { display: flex; gap: 6px; }
+.mc-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .78rem;
+  flex: 1;
+  outline: none;
+  padding: 6px 10px;
+  resize: none;
+  height: 56px;
+  line-height: 1.6;
+}
+.mc-input:focus { border-color: var(--accent); }
+.mc-input::placeholder { color: var(--muted); }
+.mc-submit {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .75rem;
+  padding: 0 12px;
+  align-self: stretch;
+  transition: opacity .12s;
+}
+.mc-submit:hover { opacity: .85; }
 /* ── 로딩/토스트 ── */
 #toast {
   position: fixed;
@@ -1605,6 +1696,81 @@ function hlUpdateBadge(hlId) {
     });
 }
 
+
+// ── 미디어 댓글 ──
+async function mcToggle(btn, encodedUrl) {
+  const panel = btn.nextElementSibling;
+  const isOpen = panel.classList.contains("open");
+
+  if (isOpen) {
+    panel.classList.remove("open");
+    return;
+  }
+
+  panel.classList.add("open");
+  await mcLoad(btn, encodedUrl, panel.querySelector(".mc-list"));
+  panel.querySelector(".mc-input")?.focus();
+}
+
+async function mcLoad(btn, encodedUrl, ul) {
+  const mediaUrl = decodeURIComponent(encodedUrl);
+  const res = await fetch(`/api/media-comments?post_id=${currentPostId}&media_url=${encodeURIComponent(mediaUrl)}`);
+  if (!res.ok) return;
+  const { comments } = await res.json();
+
+  // 뱃지 업데이트
+  const badge = btn.querySelector(".mc-count");
+  if (comments.length > 0) {
+    badge.textContent = comments.length;
+    badge.style.display = "inline";
+  } else {
+    badge.style.display = "none";
+  }
+
+  if (!comments.length) {
+    ul.innerHTML = '<li style="font-family:var(--mono);font-size:.75rem;color:var(--muted);padding:6px 0">아직 댓글이 없습니다.</li>';
+    return;
+  }
+
+  ul.innerHTML = comments.map(c => `
+    <li class="mc-item">
+      <span class="mc-text">${escHtml(c.content)}</span>
+      <span class="mc-date">${fmtDate(c.created_at)}</span>
+      <button class="mc-del" onclick="mcDelete(this, ${c.id}, '${encodedUrl}')">×</button>
+    </li>
+  `).join("");
+}
+
+async function mcSubmit(submitBtn, encodedUrl) {
+  const mediaUrl = decodeURIComponent(encodedUrl);
+  const panel = submitBtn.closest(".media-comment-panel");
+  const input = panel.querySelector(".mc-input");
+  const content = input.value.trim();
+  if (!content) return;
+
+  const res = await fetch("/api/media-comments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ post_id: currentPostId, media_url: mediaUrl, content }),
+  });
+
+  if (res.ok) {
+    input.value = "";
+    const toggleBtn = panel.previousElementSibling;
+    await mcLoad(toggleBtn, encodedUrl, panel.querySelector(".mc-list"));
+  } else {
+    toast("댓글 저장 실패", true);
+  }
+}
+
+async function mcDelete(delBtn, id, encodedUrl) {
+  if (!confirm("댓글을 삭제하시겠습니까?")) return;
+  await fetch(`/api/media-comments?id=${id}`, { method: "DELETE" });
+  const panel = delBtn.closest(".media-comment-panel");
+  const toggleBtn = panel.previousElementSibling;
+  await mcLoad(toggleBtn, encodedUrl, panel.querySelector(".mc-list"));
+}
+
 function escHtml(s) {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
@@ -1628,10 +1794,13 @@ window.addEventListener("popstate", (e) => {
 });
 // ── 댓글 입력 단축키 ──
 document.addEventListener("keydown", (e) => {
-  if ($("hl-comment-input") === document.activeElement) {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    if ($("hl-comment-input") === document.activeElement) {
       hlCommentSubmit();
+    } else if (document.activeElement?.classList.contains("mc-input")) {
+      const submitBtn = document.activeElement.closest(".mc-input-row")?.querySelector(".mc-submit");
+      submitBtn?.click();
     }
   }
 });
