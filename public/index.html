@@ -967,10 +967,28 @@ marked.use({
   renderer: {
     image(href, title, text) {
       const src = (typeof href === "object") ? (href.href || href.src || "") : (href || "");
-      if (/\.mp4(\?|$)/i.test(src)) {
-        return `<video controls src="${src}" style="max-width:100%;border-radius:6px;margin:1.5em 0;display:block"></video>`;
-      }
-      return `<img src="${src}" alt="${text || ""}" loading="lazy" style="max-width:100%;border-radius:6px;margin:1.5em auto;display:block">`;
+      const encodedUrl = encodeURIComponent(src);
+      const isVideo = /\.mp4(\?|$)/i.test(src);
+      const mediaEl = isVideo
+        ? `<video controls src="${src}" style="max-width:100%;border-radius:6px 6px 0 0;margin:1.5em auto 0;display:block"></video>`
+        : `<img src="${src}" alt="${text || ""}" loading="lazy" style="max-width:100%;border-radius:6px 6px 0 0;margin:1.5em auto 0;display:block">`;
+
+      return `<div class="media-wrap" data-url="${encodedUrl}">
+        ${mediaEl}
+        <div class="media-comment-box">
+          <button class="media-comment-toggle" onclick="mcToggle(this, '${encodedUrl}')">
+            <span>💬 댓글</span>
+            <span class="mc-count" style="display:none"></span>
+          </button>
+          <div class="media-comment-panel">
+            <ul class="mc-list"></ul>
+            <div class="mc-input-row">
+              <textarea class="mc-input" placeholder="댓글 입력... (Ctrl+Enter 제출)"></textarea>
+              <button class="mc-submit" onclick="mcSubmit(this, '${encodedUrl}')">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
     }
   }
 });
@@ -1044,11 +1062,33 @@ async function loadPost(id, pushHistory = true) {
   $("post-date").textContent = `${post.author || "마스터"} · ${fmtDate(post.created_at)}` + (post.updated_at !== post.created_at ? " (수정됨)" : "");
 
   $("post-body").innerHTML = marked.parse(post.content);
+  // 브라우저가 <p><div>를 분리하면서 생긴 빈 <p> 제거
+  $("post-body").querySelectorAll("p").forEach(p => {
+    if (!p.textContent.trim() && !p.querySelector("img,video,.media-wrap,a,code")) p.remove();
+  });
   if (typeof hljs !== "undefined") hljs.highlightAll();
 
   showOnly("post-view", pushHistory);
   await loadHighlights(id);
   setupHighlightSelection();
+  mcLoadAllBadges();
+}
+
+async function mcLoadAllBadges() {
+  const wraps = $("post-body")?.querySelectorAll(".media-wrap");
+  if (!wraps) return;
+  for (const wrap of wraps) {
+    const encodedUrl = wrap.dataset.url;
+    if (!encodedUrl) continue;
+    const mediaUrl = decodeURIComponent(encodedUrl);
+    const res = await fetch(`/api/media-comments?post_id=${currentPostId}&media_url=${encodeURIComponent(mediaUrl)}`);
+    if (!res.ok) continue;
+    const { comments } = await res.json();
+    if (comments.length > 0) {
+      const badge = wrap.querySelector(".mc-count");
+      if (badge) { badge.textContent = comments.length; badge.style.display = "inline"; }
+    }
+  }
 }
 
 function editCurrentPost() {
@@ -1329,7 +1369,13 @@ function applyHighlights() {
 }
 
 function wrapTextInBody(root, searchText, hlId, color, memo, commentCount) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      // 미디어 댓글 영역 안의 텍스트는 형광펜 대상에서 제외
+      if (node.parentElement?.closest(".media-comment-box")) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
   const nodes = [];
   let node;
   while ((node = walker.nextNode())) nodes.push(node);
