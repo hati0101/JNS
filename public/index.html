@@ -801,6 +801,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 }
 .navlink:hover { color: var(--text); }
 .navlink.active { color: var(--accent); background: var(--accent-dim); }
+.dday-badge {
+  background: var(--accent-dim); color: var(--accent); border: 1px solid transparent;
+  font-family: var(--mono); font-size: 13px; padding: 6px 10px; border-radius: 6px;
+  cursor: pointer; white-space: nowrap; margin-left: 2px;
+}
+.dday-badge:hover { border-color: var(--accent); }
+.dday-badge:not(.set) { background: none; color: var(--muted); }
 
 /* ── 숙제: 달력 ── */
 #homework-view, #hwadmin-view { display: none; }
@@ -934,6 +941,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
       <button class="navlink active" id="nav-column" onclick="showList()">칼럼</button>
       <button class="navlink" id="nav-homework" onclick="showHomework()">숙제</button>
       <button class="navlink" id="nav-contract" onclick="showContract()">계약서</button>
+      <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day 설정"></button>
     </nav>
     <div class="header-actions">
       <button class="btn primary" id="new-post-btn" onclick="showEditor()">새 글</button>
@@ -1226,6 +1234,7 @@ async function login() {
 
 // URL 파라미터 기준 초기 라우팅 (로그인 직후 / 새로고침 공용)
 async function routeFromUrl() {
+  loadDday();
   const params = new URLSearchParams(location.search);
   const postId = params.get("post");
   const page = parseInt(params.get("page") || "1");
@@ -2284,6 +2293,59 @@ async function hwItemEdit(id, btn) {
 async function hwItemDelete(id) {
   if (!confirm("이 추가 숙제를 삭제할까요?")) return;
   if (await hwAdminPost("item-delete", { id })) hwAdminLoad();
+}
+
+// ── D-day ──
+let ddayData = null;  // { date:'YYYY-MM-DD', label }
+
+function fmtDday(dateStr) {
+  const t = new Date(dateStr + "T00:00:00+09:00").getTime();
+  const n = new Date(ymdKST() + "T00:00:00+09:00").getTime();
+  const diff = Math.round((t - n) / 86400000);
+  if (diff === 0) return "D-DAY";
+  return diff > 0 ? `D-${diff}` : `D+${-diff}`;
+}
+
+async function loadDday() {
+  try {
+    const res = await fetch("/api/settings?key=dday");
+    const { value } = await res.json();
+    ddayData = value ? JSON.parse(value) : null;
+  } catch { ddayData = null; }
+  renderDday();
+}
+
+function renderDday() {
+  const el = $("dday-badge");
+  if (!el) return;
+  if (ddayData?.date) {
+    const c = fmtDday(ddayData.date);
+    el.textContent = ddayData.label ? `${ddayData.label} ${c}` : c;
+    el.classList.add("set");
+  } else {
+    el.textContent = "＋D-day";
+    el.classList.remove("set");
+  }
+}
+
+async function ddayEdit() {
+  const date = prompt("D-day 기준 날짜 (YYYY-MM-DD)\n비우고 확인하면 D-day 삭제", ddayData?.date || ymdKST());
+  if (date === null) return;
+  if (date.trim() === "") { await saveDday(null); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date.trim())) { toast("날짜 형식: YYYY-MM-DD", true); return; }
+  const label = prompt("라벨 (선택, 비우면 없음)", ddayData?.label || "");
+  if (label === null) return;
+  await saveDday({ date: date.trim(), label: label.trim() });
+}
+
+async function saveDday(obj) {
+  const res = await fetch("/api/settings", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: "dday", value: obj ? JSON.stringify(obj) : "" })
+  });
+  if (!res.ok) { toast("저장 실패", true); return; }
+  ddayData = obj;
+  renderDday();
 }
 
 // ── 계약서 ──
