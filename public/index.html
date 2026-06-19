@@ -791,6 +791,105 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 }
 #toast.show { opacity: 1; }
 #toast.error { border-color: var(--danger); color: var(--danger); }
+
+/* ── 상단 내비 ── */
+.topnav { display: flex; gap: 4px; margin-left: 18px; flex: 1; }
+.navlink {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-family: var(--mono); font-size: 14px; padding: 6px 12px; border-radius: 6px;
+  transition: color .15s, background .15s;
+}
+.navlink:hover { color: var(--text); }
+.navlink.active { color: var(--accent); background: var(--accent-dim); }
+
+/* ── 숙제: 달력 ── */
+#homework-view, #hwadmin-view { display: none; }
+.hw-cal-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.hw-cal-header h2 { font-family: var(--mono); font-size: 20px; flex: 1; }
+.hw-cal {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 36px;
+}
+.hw-dow {
+  text-align: center; font-family: var(--mono); font-size: 12px; color: var(--muted);
+  padding-bottom: 4px;
+}
+.hw-cell {
+  position: relative; min-height: 64px; border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px; cursor: pointer; background: var(--surface);
+  transition: border-color .15s, transform .1s;
+}
+.hw-cell:hover { border-color: var(--accent); }
+.hw-cell.empty { border: none; background: none; cursor: default; }
+.hw-cell.today { border-color: var(--accent); }
+.hw-cell.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hw-cell.full { border-color: var(--accent); }
+.hw-cell-day { font-family: var(--mono); font-size: 13px; color: var(--text); }
+.hw-cell-rate {
+  position: absolute; right: 6px; bottom: 5px;
+  font-family: var(--mono); font-size: 11px; color: var(--text); font-weight: 600;
+}
+
+/* ── 숙제: 그날 목록 ── */
+.hw-day-header {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--border); padding-bottom: 10px;
+}
+.hw-day-header h3 { font-family: var(--serif); font-size: 20px; }
+.hw-day-rate { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.hw-task-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.hw-task {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  cursor: pointer; transition: border-color .15s, opacity .15s;
+}
+.hw-task:hover { border-color: var(--accent); }
+.hw-check {
+  width: 22px; height: 22px; flex: none; border: 1.5px solid var(--muted);
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 14px; transition: background .15s, border-color .15s;
+}
+.hw-task.done .hw-check { background: var(--accent); border-color: var(--accent); }
+.hw-task.done .hw-task-title { color: var(--muted); text-decoration: line-through; }
+.hw-task-title { flex: 1; }
+.hw-task-tag {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;
+}
+.hw-empty { color: var(--muted); padding: 20px; text-align: center; }
+
+/* ── 숙제: 관리자 ── */
+.hw-admin-gate { max-width: 320px; margin: 80px auto; text-align: center; }
+.hw-admin-gate h2 { font-family: var(--mono); margin-bottom: 20px; }
+#hw-admin-error { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 18px; }
+.hw-admin-sec { margin-top: 36px; }
+.hw-admin-sec h3 { font-family: var(--mono); font-size: 16px; margin-bottom: 14px; }
+.hw-sec-sub { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+.hw-add-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.hw-add-row input[type="text"] { flex: 1; min-width: 160px; }
+.hw-add-row input {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 14px;
+}
+.hw-admin-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.hw-admin-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+}
+.hw-admin-item.ended { opacity: .5; }
+.hw-admin-item.ended em { color: var(--muted); font-style: normal; font-size: 12px; }
+.hw-admin-title { flex: 1; }
+.hw-admin-btns { display: flex; gap: 6px; flex: none; }
+.hw-admin-btns .btn { padding: 5px 10px; font-size: 13px; }
+
+@media (max-width: 600px) {
+  .topnav { margin-left: 8px; }
+  .hw-cell { min-height: 52px; padding: 4px; }
+  .hw-cell-day { font-size: 12px; }
+  .hw-cell-rate { font-size: 10px; }
+  .hw-admin-btns .btn { padding: 4px 8px; font-size: 12px; }
+}
 </style>
 </head>
 <body>
@@ -808,9 +907,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 <!-- 앱 -->
 <div id="app">
   <header>
-    <span class="site-title" onclick="showList()">아키텍트 / 칼럼</span>
+    <span class="site-title" onclick="showList()">아키텍트</span>
+    <nav class="topnav">
+      <button class="navlink active" id="nav-column" onclick="showList()">칼럼</button>
+      <button class="navlink" id="nav-homework" onclick="showHomework()">숙제</button>
+    </nav>
     <div class="header-actions">
-      <button class="btn primary" onclick="showEditor()">새 글</button>
+      <button class="btn primary" id="new-post-btn" onclick="showEditor()">새 글</button>
       <button class="btn danger" onclick="logout()">로그아웃</button>
     </div>
   </header>
@@ -885,6 +988,61 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
         <button class="btn primary" onclick="savePost()">저장</button>
       </div>
     </div>
+
+    <!-- 숙제 (사용자) -->
+    <div id="homework-view">
+      <div class="hw-cal-header">
+        <button class="btn" onclick="hwCalMove(-1)">‹</button>
+        <h2 id="hw-cal-title"></h2>
+        <button class="btn" onclick="hwCalMove(1)">›</button>
+        <button class="btn" onclick="hwGoToday()">오늘</button>
+      </div>
+      <div class="hw-cal" id="hw-cal"></div>
+      <div class="hw-day">
+        <div class="hw-day-header">
+          <h3 id="hw-day-title"></h3>
+          <span class="hw-day-rate" id="hw-day-rate"></span>
+        </div>
+        <ul class="hw-task-list" id="hw-task-list"></ul>
+      </div>
+    </div>
+
+    <!-- 숙제 관리자 (슬러그 + 별도 비번) -->
+    <div id="hwadmin-view">
+      <div class="hw-admin-gate" id="hw-admin-gate">
+        <h2>숙제 관리자</h2>
+        <div class="login-box">
+          <input type="password" id="hw-admin-pw" placeholder="관리자 비밀번호" autocomplete="off">
+          <button onclick="hwAdminAuth()">→</button>
+        </div>
+        <div id="hw-admin-error"></div>
+      </div>
+      <div class="hw-admin-panel" id="hw-admin-panel" style="display:none">
+        <div class="list-header">
+          <h2>숙제 관리</h2>
+          <button class="btn" onclick="showHomework()">사용자 화면 →</button>
+        </div>
+
+        <section class="hw-admin-sec">
+          <h3>고정 숙제 <span class="hw-sec-sub">매일 반복</span></h3>
+          <div class="hw-add-row">
+            <input type="text" id="hw-tpl-input" placeholder="고정 숙제 추가 (Enter)">
+            <button class="btn primary" onclick="hwTplAdd()">추가</button>
+          </div>
+          <ul class="hw-admin-list" id="hw-tpl-list"></ul>
+        </section>
+
+        <section class="hw-admin-sec">
+          <h3>그날 추가 숙제 <span class="hw-sec-sub">날짜 지정</span></h3>
+          <div class="hw-add-row">
+            <input type="date" id="hw-item-date" onchange="hwAdminLoad()">
+            <input type="text" id="hw-item-input" placeholder="해당 날짜 숙제 추가 (Enter)">
+            <button class="btn primary" onclick="hwItemAdd()">추가</button>
+          </div>
+          <ul class="hw-admin-list" id="hw-item-list"></ul>
+        </section>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -934,6 +1092,10 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 let currentPostId = null;
 let currentPage = 1;
 let editingId = null;
+// 숙제 상태
+let hwMonth = null;     // 'YYYY-MM' 달력에 표시 중인 달
+let hwSelDate = null;   // 선택된 날짜 'YYYY-MM-DD'
+let hwAdminToken = sessionStorage.getItem("hwAdminToken") || null;
 
 // ── Helpers ──
 function $(id) { return document.getElementById(id); }
@@ -946,15 +1108,27 @@ function toast(msg, error = false) {
   el._t = setTimeout(() => el.className = "", 2200);
 }
 
+const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view"];
 function showOnly(viewId, pushHistory = true) {
-  ["list-view","post-view","editor-view"].forEach(id => {
-    $(id).style.display = id === viewId ? "block" : "none";
+  ALL_VIEWS.forEach(id => {
+    const el = $(id);
+    if (el) el.style.display = id === viewId ? "block" : "none";
   });
+  // 상단 내비 활성화
+  const navCol = $("nav-column"), navHw = $("nav-homework");
+  const inColumn = ["list-view","post-view","editor-view"].includes(viewId);
+  if (navCol) navCol.classList.toggle("active", inColumn);
+  if (navHw) navHw.classList.toggle("active", viewId === "homework-view");
+  const newBtn = $("new-post-btn");
+  if (newBtn) newBtn.style.display = (viewId === "list-view" || viewId === "post-view") ? "" : "none";
+
   if (pushHistory) {
-    const state = { view: viewId, postId: currentPostId, page: currentPage };
+    const state = { view: viewId, postId: currentPostId, page: currentPage, hwMonth, hwDate: hwSelDate };
     if (viewId === "list-view") history.pushState(state, "", `/?page=${currentPage}`);
     else if (viewId === "post-view") history.pushState(state, "", `/?post=${currentPostId}`);
     else if (viewId === "editor-view") history.pushState(state, "", "/?write");
+    else if (viewId === "homework-view") history.pushState(state, "", hwSelDate ? `/?homework=${hwSelDate}` : "/?homework");
+    else if (viewId === "hwadmin-view") history.pushState(state, "", "/?hwadmin");
   }
 }
 
@@ -1004,10 +1178,32 @@ async function login() {
   if (res.ok) {
     $("login-screen").style.display = "none";
     $("app").style.display = "block";
-    loadList();
+    routeFromUrl();
   } else {
     $("login-error").textContent = "비밀번호가 틀렸습니다.";
     $("pw-input").value = "";
+  }
+}
+
+// URL 파라미터 기준 초기 라우팅 (로그인 직후 / 새로고침 공용)
+async function routeFromUrl() {
+  const params = new URLSearchParams(location.search);
+  const postId = params.get("post");
+  const page = parseInt(params.get("page") || "1");
+  if (params.has("hwadmin")) {
+    await showHwAdmin(false);
+    history.replaceState({ view: "hwadmin-view" }, "", location.href);
+  } else if (params.has("homework")) {
+    const d = params.get("homework");
+    await showHomework(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null, false);
+    history.replaceState({ view: "homework-view", hwMonth, hwDate: hwSelDate }, "", location.href);
+  } else if (postId) {
+    currentPostId = parseInt(postId);
+    await loadPost(currentPostId, false);
+    history.replaceState({ view: "post-view", postId: currentPostId, page }, "", location.href);
+  } else {
+    await loadList(page);
+    history.replaceState({ view: "list-view", postId: currentPostId, page }, "", location.href);
   }
 }
 
@@ -1822,12 +2018,249 @@ function escHtml(s) {
 }
 
 
+// ── 숙제: 날짜 유틸 (KST) ──
+function ymKST(d = new Date()) {
+  return new Date(d.getTime() + 9*3600*1000).toISOString().slice(0,7);
+}
+function ymdKST(d = new Date()) {
+  return new Date(d.getTime() + 9*3600*1000).toISOString().slice(0,10);
+}
+
+// ── 숙제: 사용자 화면 ──
+async function showHomework(date = null, push = true) {
+  hwSelDate = (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) ? date : (hwSelDate || ymdKST());
+  hwMonth = hwSelDate.slice(0,7);
+  showOnly("homework-view", push);
+  await hwRenderCalendar();
+  await hwLoadDay(hwSelDate);
+}
+
+async function hwRenderCalendar() {
+  $("hw-cal-title").textContent = hwMonth.replace("-", ". ");
+  let days = {};
+  try {
+    const res = await fetch(`/api/homework?month=${hwMonth}`);
+    days = (await res.json()).days || {};
+  } catch { toast("달력 로딩 실패", true); }
+
+  const [y, m] = hwMonth.split("-").map(Number);
+  const firstDow = new Date(y, m-1, 1).getDay();   // 0=일
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const today = ymdKST();
+
+  let html = ["일","월","화","수","목","금","토"].map(w => `<div class="hw-dow">${w}</div>`).join("");
+  for (let i=0;i<firstDow;i++) html += `<div class="hw-cell empty"></div>`;
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = `${hwMonth}-${String(d).padStart(2,"0")}`;
+    const info = days[ds];
+    let cls = "hw-cell", style = "", badge = "";
+    if (info && info.total) {
+      const rate = Math.round(info.done / info.total * 100);
+      const alpha = (0.10 + 0.62 * (rate/100)).toFixed(2);   // 완료율 % 색 농도
+      style = `style="background:rgba(155,127,255,${alpha})"`;
+      badge = `<span class="hw-cell-rate">${rate}%</span>`;
+      if (rate === 100) cls += " full";
+    }
+    if (ds === today) cls += " today";
+    if (ds === hwSelDate) cls += " sel";
+    html += `<div class="${cls}" ${style} onclick="hwSelectDay('${ds}')">
+      <span class="hw-cell-day">${d}</span>${badge}</div>`;
+  }
+  $("hw-cal").innerHTML = html;
+}
+
+async function hwSelectDay(ds) {
+  hwSelDate = ds;
+  await hwRenderCalendar();
+  await hwLoadDay(ds);
+  history.replaceState(
+    { view:"homework-view", hwMonth, hwDate:ds, page:currentPage, postId:currentPostId },
+    "", `/?homework=${ds}`
+  );
+}
+
+async function hwCalMove(delta) {
+  const [y, m] = hwMonth.split("-").map(Number);
+  const nd = new Date(y, m-1+delta, 1);
+  hwMonth = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,"0")}`;
+  await hwRenderCalendar();
+}
+
+async function hwGoToday() {
+  await showHomework(ymdKST(), false);
+  history.replaceState({ view:"homework-view", hwMonth, hwDate:hwSelDate }, "", `/?homework=${hwSelDate}`);
+}
+
+async function hwLoadDay(ds) {
+  let data;
+  try {
+    const res = await fetch(`/api/homework?date=${ds}`);
+    data = await res.json();
+  } catch { toast("불러오기 실패", true); return; }
+
+  $("hw-day-title").textContent = fmtDate(ds);
+  const rate = data.total ? Math.round(data.done / data.total * 100) : 0;
+  $("hw-day-rate").textContent = data.total ? `${data.done}/${data.total} · ${rate}%` : "숙제 없음";
+
+  const ul = $("hw-task-list");
+  if (!data.tasks.length) {
+    ul.innerHTML = `<li class="hw-empty">이 날은 배정된 숙제가 없어요.</li>`;
+    return;
+  }
+  ul.innerHTML = data.tasks.map(t => `
+    <li class="hw-task ${t.done ? 'done' : ''}" onclick="hwToggle('${ds}','${t.kind}',${t.id},${!t.done})">
+      <span class="hw-check">${t.done ? '✓' : ''}</span>
+      <span class="hw-task-title">${escHtml(t.title)}</span>
+      <span class="hw-task-tag">${t.kind === 'template' ? '고정' : '추가'}</span>
+    </li>`).join("");
+}
+
+async function hwToggle(ds, kind, id, done) {
+  try {
+    const res = await fetch(`/api/homework?action=toggle`, {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ date: ds, kind, ref_id: id, done })
+    });
+    if (!res.ok) throw 0;
+  } catch { toast("처리 실패", true); return; }
+  await hwLoadDay(ds);
+  await hwRenderCalendar();
+}
+
+// ── 숙제: 관리자 화면 ──
+function hwAdminHeaders() {
+  return { "Content-Type":"application/json", ...(hwAdminToken ? { "X-HW-Admin": hwAdminToken } : {}) };
+}
+
+async function showHwAdmin(push = true) {
+  showOnly("hwadmin-view", push);
+  if (hwAdminToken) {
+    $("hw-admin-gate").style.display = "none";
+    $("hw-admin-panel").style.display = "block";
+    await hwAdminLoad();
+  } else {
+    $("hw-admin-gate").style.display = "block";
+    $("hw-admin-panel").style.display = "none";
+    setTimeout(() => $("hw-admin-pw")?.focus(), 50);
+  }
+}
+
+async function hwAdminAuth() {
+  const pw = $("hw-admin-pw").value;
+  const res = await fetch("/api/homework?action=admin-auth", {
+    method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ password: pw })
+  });
+  if (res.ok) {
+    hwAdminToken = (await res.json()).token;
+    sessionStorage.setItem("hwAdminToken", hwAdminToken);
+    $("hw-admin-error").textContent = "";
+    $("hw-admin-pw").value = "";
+    await showHwAdmin(false);
+  } else {
+    $("hw-admin-error").textContent = "비밀번호가 틀렸습니다.";
+    $("hw-admin-pw").value = "";
+  }
+}
+
+async function hwAdminLoad() {
+  if (!$("hw-item-date").value) $("hw-item-date").value = ymdKST();
+  const date = $("hw-item-date").value;
+  const res = await fetch(`/api/homework?action=admin-data&date=${date}`, { headers: hwAdminHeaders() });
+  if (res.status === 403) {
+    hwAdminToken = null; sessionStorage.removeItem("hwAdminToken");
+    return showHwAdmin(false);
+  }
+  const data = await res.json();
+
+  $("hw-tpl-list").innerHTML = (data.templates || []).map(t => {
+    const ended = t.end_date && t.end_date < ymdKST();
+    return `<li class="hw-admin-item ${ended ? 'ended' : ''}">
+      <span class="hw-admin-title">${escHtml(t.title)}${ended ? ` <em>(종료 ${t.end_date})</em>` : ''}</span>
+      <span class="hw-admin-btns">
+        <button class="btn" onclick="hwTplEdit(${t.id}, this)">수정</button>
+        ${ended
+          ? `<button class="btn" onclick="hwTplAction('template-reactivate',${t.id})">재개</button>`
+          : `<button class="btn" onclick="hwTplAction('template-end',${t.id})">종료</button>`}
+        <button class="btn danger" onclick="hwTplDelete(${t.id})">삭제</button>
+      </span>
+    </li>`;
+  }).join("") || `<li class="hw-empty">고정 숙제 없음</li>`;
+
+  $("hw-item-list").innerHTML = (data.items || []).map(i => `
+    <li class="hw-admin-item">
+      <span class="hw-admin-title">${escHtml(i.title)}</span>
+      <span class="hw-admin-btns">
+        <button class="btn" onclick="hwItemEdit(${i.id}, this)">수정</button>
+        <button class="btn danger" onclick="hwItemDelete(${i.id})">삭제</button>
+      </span>
+    </li>`).join("") || `<li class="hw-empty">이 날 추가 숙제 없음</li>`;
+}
+
+async function hwAdminPost(action, payload) {
+  const res = await fetch(`/api/homework?action=${action}`, {
+    method:"POST", headers: hwAdminHeaders(), body: JSON.stringify(payload || {})
+  });
+  if (res.status === 403) {
+    hwAdminToken = null; sessionStorage.removeItem("hwAdminToken");
+    toast("관리자 세션 만료", true); showHwAdmin(false); return false;
+  }
+  if (!res.ok) { toast("실패", true); return false; }
+  return true;
+}
+
+async function hwTplAdd() {
+  const v = $("hw-tpl-input").value.trim();
+  if (!v) return;
+  if (await hwAdminPost("template-add", { title: v })) { $("hw-tpl-input").value = ""; hwAdminLoad(); }
+}
+async function hwTplEdit(id, btn) {
+  const cur = btn.closest(".hw-admin-item").querySelector(".hw-admin-title").textContent.trim();
+  const v = prompt("고정 숙제 수정", cur.replace(/\s*\(종료.*\)$/, ""));
+  if (v === null || !v.trim()) return;
+  if (await hwAdminPost("template-update", { id, title: v.trim() })) hwAdminLoad();
+}
+async function hwTplAction(action, id) {
+  if (await hwAdminPost(action, { id })) hwAdminLoad();
+}
+async function hwTplDelete(id) {
+  if (!confirm("이 고정 숙제와 모든 날짜의 완료 기록을 삭제할까요?")) return;
+  if (await hwAdminPost("template-delete", { id })) hwAdminLoad();
+}
+async function hwItemAdd() {
+  const date = $("hw-item-date").value || ymdKST();
+  const v = $("hw-item-input").value.trim();
+  if (!v) return;
+  if (await hwAdminPost("item-add", { date, title: v })) { $("hw-item-input").value = ""; hwAdminLoad(); }
+}
+async function hwItemEdit(id, btn) {
+  const cur = btn.closest(".hw-admin-item").querySelector(".hw-admin-title").textContent.trim();
+  const v = prompt("추가 숙제 수정", cur);
+  if (v === null || !v.trim()) return;
+  if (await hwAdminPost("item-update", { id, title: v.trim() })) hwAdminLoad();
+}
+async function hwItemDelete(id) {
+  if (!confirm("이 추가 숙제를 삭제할까요?")) return;
+  if (await hwAdminPost("item-delete", { id })) hwAdminLoad();
+}
+
+// 관리자 입력 Enter 단축키
+$("hw-tpl-input")?.addEventListener("keydown", e => { if (e.key === "Enter") hwTplAdd(); });
+$("hw-item-input")?.addEventListener("keydown", e => { if (e.key === "Enter") hwItemAdd(); });
+$("hw-admin-pw")?.addEventListener("keydown", e => { if (e.key === "Enter") hwAdminAuth(); });
+
+
 // ── 뒤로가기 처리 ──
 window.addEventListener("popstate", (e) => {
   const state = e.state;
   if (!state) { showOnly("list-view", false); loadList(1); return; }
 
-  if (state.view === "list-view") {
+  if (state.view === "homework-view") {
+    if (state.hwMonth) hwMonth = state.hwMonth;
+    showHomework(state.hwDate || null, false);
+  } else if (state.view === "hwadmin-view") {
+    showHwAdmin(false);
+  } else if (state.view === "list-view") {
     showOnly("list-view", false);
     loadList(state.page || 1);
   } else if (state.view === "post-view" && state.postId) {
@@ -1863,18 +2296,7 @@ if ("serviceWorker" in navigator) {
     if (res.ok) {
       $("login-screen").style.display = "none";
       $("app").style.display = "block";
-      // URL 파라미터로 초기 뷰 결정
-      const params = new URLSearchParams(location.search);
-      const postId = params.get("post");
-      const page = parseInt(params.get("page") || "1");
-      if (postId) {
-        currentPostId = parseInt(postId);
-        await loadPost(currentPostId, false);
-      } else {
-        await loadList(page);
-      }
-      // 초기 히스토리 교체
-      history.replaceState({ view: postId ? "post-view" : "list-view", postId: currentPostId, page }, "", location.href);
+      await routeFromUrl();
       return;
     }
     document.cookie = "token=; Path=/; Max-Age=0";
