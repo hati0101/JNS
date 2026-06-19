@@ -883,6 +883,28 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .hw-admin-btns { display: flex; gap: 6px; flex: none; }
 .hw-admin-btns .btn { padding: 5px 10px; font-size: 13px; }
 
+/* ── 계약서 ── */
+#contract-view { display: none; }
+.contract-manage-bar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  padding: 14px; border: 1px dashed var(--border); border-radius: 8px; flex-wrap: wrap;
+}
+.contract-manage-bar input[type="file"] { color: var(--muted); font-family: var(--mono); font-size: 13px; }
+#contract-upload-status { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.contract-feed { display: flex; flex-direction: column; gap: 16px; }
+.contract-item { position: relative; }
+.contract-item img {
+  display: block; width: 100%; height: auto; border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.contract-ctrl {
+  position: absolute; top: 10px; right: 10px; display: flex; gap: 6px;
+  background: rgba(0,0,0,.55); padding: 6px; border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+.contract-ctrl .btn { padding: 5px 10px; font-size: 13px; }
+.contract-ctrl .btn:disabled { opacity: .35; cursor: default; }
+
 @media (max-width: 600px) {
   .topnav { margin-left: 8px; }
   .hw-cell { min-height: 52px; padding: 4px; }
@@ -911,6 +933,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
     <nav class="topnav">
       <button class="navlink active" id="nav-column" onclick="showList()">칼럼</button>
       <button class="navlink" id="nav-homework" onclick="showHomework()">숙제</button>
+      <button class="navlink" id="nav-contract" onclick="showContract()">계약서</button>
     </nav>
     <div class="header-actions">
       <button class="btn primary" id="new-post-btn" onclick="showEditor()">새 글</button>
@@ -1044,6 +1067,19 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
         </section>
       </div>
     </div>
+
+    <!-- 계약서 (이미지 세로 피드) -->
+    <div id="contract-view">
+      <div class="list-header">
+        <h2>계약서</h2>
+        <button class="btn" id="contract-manage-btn" onclick="toggleContractManage()">관리</button>
+      </div>
+      <div class="contract-manage-bar" id="contract-manage-bar" style="display:none">
+        <input type="file" id="contract-file" accept="image/*" multiple onchange="contractUpload(this.files)">
+        <span id="contract-upload-status"></span>
+      </div>
+      <div class="contract-feed" id="contract-feed"></div>
+    </div>
   </main>
 </div>
 
@@ -1109,17 +1145,18 @@ function toast(msg, error = false) {
   el._t = setTimeout(() => el.className = "", 2200);
 }
 
-const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view"];
+const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view","contract-view"];
 function showOnly(viewId, pushHistory = true) {
   ALL_VIEWS.forEach(id => {
     const el = $(id);
     if (el) el.style.display = id === viewId ? "block" : "none";
   });
   // 상단 내비 활성화
-  const navCol = $("nav-column"), navHw = $("nav-homework");
+  const navCol = $("nav-column"), navHw = $("nav-homework"), navCt = $("nav-contract");
   const inColumn = ["list-view","post-view","editor-view"].includes(viewId);
   if (navCol) navCol.classList.toggle("active", inColumn);
   if (navHw) navHw.classList.toggle("active", viewId === "homework-view");
+  if (navCt) navCt.classList.toggle("active", viewId === "contract-view");
   const newBtn = $("new-post-btn");
   if (newBtn) newBtn.style.display = (viewId === "list-view" || viewId === "post-view") ? "" : "none";
 
@@ -1130,6 +1167,7 @@ function showOnly(viewId, pushHistory = true) {
     else if (viewId === "editor-view") history.pushState(state, "", "/?write");
     else if (viewId === "homework-view") history.pushState(state, "", hwSelDate ? `/?homework=${hwSelDate}` : "/?homework");
     else if (viewId === "hwadmin-view") history.pushState(state, "", "/?hwadmin");
+    else if (viewId === "contract-view") history.pushState(state, "", "/?contract");
   }
 }
 
@@ -1198,6 +1236,9 @@ async function routeFromUrl() {
     const d = params.get("homework");
     await showHomework(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null, false);
     history.replaceState({ view: "homework-view", hwMonth, hwDate: hwSelDate }, "", location.href);
+  } else if (params.has("contract")) {
+    await showContract(false);
+    history.replaceState({ view: "contract-view" }, "", location.href);
   } else if (postId) {
     currentPostId = parseInt(postId);
     await loadPost(currentPostId, false);
@@ -2245,6 +2286,90 @@ async function hwItemDelete(id) {
   if (await hwAdminPost("item-delete", { id })) hwAdminLoad();
 }
 
+// ── 계약서 ──
+let contractManage = false;
+
+async function showContract(push = true) {
+  showOnly("contract-view", push);
+  await renderContracts();
+}
+
+async function renderContracts() {
+  $("contract-manage-btn").textContent = contractManage ? "완료" : "관리";
+  $("contract-manage-bar").style.display = contractManage ? "flex" : "none";
+
+  let contracts = [];
+  try {
+    const res = await fetch("/api/contracts");
+    contracts = (await res.json()).contracts || [];
+  } catch { toast("불러오기 실패", true); }
+
+  const feed = $("contract-feed");
+  if (!contracts.length) {
+    feed.innerHTML = `<div class="hw-empty">아직 등록된 계약서가 없어요.${contractManage ? " 위에서 이미지를 추가하세요." : ""}</div>`;
+    return;
+  }
+  feed.innerHTML = contracts.map((c, i) => `
+    <div class="contract-item">
+      <img src="${c.image_url}" alt="" loading="lazy">
+      ${contractManage ? `
+      <div class="contract-ctrl">
+        <button class="btn" onclick="contractMove(${c.id},-1)" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button class="btn" onclick="contractMove(${c.id},1)" ${i === contracts.length - 1 ? "disabled" : ""}>↓</button>
+        <button class="btn danger" onclick="contractDelete(${c.id})">삭제</button>
+      </div>` : ""}
+    </div>`).join("");
+}
+
+function toggleContractManage() {
+  contractManage = !contractManage;
+  renderContracts();
+}
+
+async function contractUpload(files) {
+  if (!files.length) return;
+  const status = $("contract-upload-status");
+  let done = 0;
+  for (const file of files) {
+    status.textContent = `업로드 중... (${done}/${files.length})`;
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await fetch("/api/media", { method: "POST", body: fd });
+      if (!up.ok) throw 0;
+      const { url } = await up.json();
+      const add = await fetch("/api/contracts?action=add", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: url })
+      });
+      if (!add.ok) throw 0;
+      done++;
+    } catch { toast(`${file.name} 실패`, true); }
+  }
+  status.textContent = "";
+  $("contract-file").value = "";
+  await renderContracts();
+}
+
+async function contractMove(id, dir) {
+  const res = await fetch("/api/contracts?action=move", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, dir })
+  });
+  if (!res.ok) { toast("이동 실패", true); return; }
+  await renderContracts();
+}
+
+async function contractDelete(id) {
+  if (!confirm("이 이미지를 목록에서 삭제할까요?")) return;
+  const res = await fetch("/api/contracts?action=delete", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id })
+  });
+  if (!res.ok) { toast("삭제 실패", true); return; }
+  await renderContracts();
+}
+
 // 관리자 입력 Enter 단축키
 $("hw-tpl-input")?.addEventListener("keydown", e => { if (e.key === "Enter") hwTplAdd(); });
 $("hw-item-input")?.addEventListener("keydown", e => { if (e.key === "Enter") hwItemAdd(); });
@@ -2261,6 +2386,8 @@ window.addEventListener("popstate", (e) => {
     showHomework(state.hwDate || null, false);
   } else if (state.view === "hwadmin-view") {
     showHwAdmin(false);
+  } else if (state.view === "contract-view") {
+    showContract(false);
   } else if (state.view === "list-view") {
     showOnly("list-view", false);
     loadList(state.page || 1);
