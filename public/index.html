@@ -116,6 +116,7 @@ header {
 }
 .site-title:hover { color: var(--text); }
 .header-actions { display: flex; gap: 12px; align-items: center; }
+.site-title, .navlink, .btn, .dday-badge { white-space: nowrap; }
 .btn {
   background: none;
   border: 1px solid var(--border);
@@ -403,7 +404,18 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 
 /* ── 반응형 ── */
 @media (max-width: 600px) {
-  header { padding: 0 20px; }
+  header { padding: 0 12px; gap: 6px; }
+  .site-title { display: none; }                 /* 좁은 화면에선 숨김 (칼럼 탭이 같은 역할) */
+  .topnav {
+    margin-left: 0; gap: 2px; flex: 1 1 auto;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .topnav::-webkit-scrollbar { display: none; }
+  .navlink { padding: 6px 9px; font-size: 13px; }
+  .dday-badge { padding: 5px 8px; font-size: 12px; margin-left: 0; }
+  .header-actions { gap: 6px; flex: 0 0 auto; }
+  .header-actions .btn { padding: 6px 9px; font-size: 12px; letter-spacing: 0; }
+
   main { padding: 40px 20px; }
   .post-item { flex-direction: column; gap: 4px; }
   .post-date { font-size: .68rem; }
