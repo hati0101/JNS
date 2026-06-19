@@ -826,7 +826,12 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .hw-cal-header {
   display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
 }
-.hw-cal-header h2 { font-family: var(--mono); font-size: 20px; flex: 1; }
+.hw-cal-header h2 { font-family: var(--mono); font-size: 20px; }
+.hw-cal-spacer { flex: 1; }
+.hw-month-rate {
+  font-family: var(--mono); font-size: 15px; font-weight: 600;
+  color: var(--accent); white-space: nowrap;
+}
 .hw-cal {
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 36px;
 }
@@ -1037,6 +1042,8 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
       <div class="hw-cal-header">
         <button class="btn" onclick="hwCalMove(-1)">‹</button>
         <h2 id="hw-cal-title"></h2>
+        <span class="hw-month-rate" id="hw-month-rate"></span>
+        <span class="hw-cal-spacer"></span>
         <button class="btn" onclick="hwCalMove(1)">›</button>
         <button class="btn" onclick="hwGoToday()">오늘</button>
         <button class="btn" onclick="showHwAdmin()">관리자</button>
@@ -2110,6 +2117,22 @@ async function hwRenderCalendar() {
   const firstDow = new Date(y, m-1, 1).getDay();   // 0=일
   const daysInMonth = new Date(y, m, 0).getDate();
   const today = ymdKST();
+
+  // 월 전체 달성률 (오늘까지 기준)
+  let mTotal = 0, mDone = 0;
+  for (const ds in days) {
+    if (ds <= today) { mTotal += days[ds].total; mDone += days[ds].done; }
+  }
+  const mr = $("hw-month-rate");
+  if (mr) {
+    if (mTotal > 0) {
+      mr.textContent = `${Math.round(mDone / mTotal * 100)}%`;
+      mr.title = `완료 ${mDone} / ${mTotal} (오늘까지)`;
+    } else {
+      mr.textContent = "—";
+      mr.title = "";
+    }
+  }
 
   let html = ["일","월","화","수","목","금","토"].map(w => `<div class="hw-dow">${w}</div>`).join("");
   for (let i=0;i<firstDow;i++) html += `<div class="hw-cell empty"></div>`;
