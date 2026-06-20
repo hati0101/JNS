@@ -97,7 +97,14 @@ export async function onRequestGet({ request, env }) {
 
   // 특정 날짜 숙제
   const date = url.searchParams.get("date");
-  if (date) return json(await tasksForDate(env, date));
+  if (date) {
+    const result = await tasksForDate(env, date);
+    const settled = await env.DB.prepare(
+      "SELECT date, rate, delta FROM hw_settle WHERE date = ?"
+    ).bind(date).first();
+    result.settled = settled || null;
+    return json(result);
+  }
 
   // 한 달 달력 집계
   const month = url.searchParams.get("month"); // 'YYYY-MM'
@@ -132,7 +139,10 @@ export async function onRequestGet({ request, env }) {
     for (const r of done) {
       if (days[r.date]) days[r.date].done++;
     }
-    return json({ month, days });
+    const { results: settledRows } = await env.DB.prepare(
+      "SELECT date FROM hw_settle WHERE date >= ? AND date <= ?"
+    ).bind(first, last).all();
+    return json({ month, days, settled: settledRows.map(r => r.date) });
   }
 
   return json({ error: "date or month required" }, 400);
@@ -152,11 +162,13 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, token: await makeAdminToken(env.JWT_SECRET) });
   }
 
-  // 완료 토글 (로그인된 사용자 누구나)
+  // 완료 토글 (로그인된 사용자 누구나) — 단, 집행(동결)된 날은 변경 불가
   if (action === "toggle") {
     const { date, kind, ref_id, done } = body;
     if (!date || !["template", "item"].includes(kind) || !ref_id)
       return json({ error: "bad request" }, 400);
+    const settled = await env.DB.prepare("SELECT date FROM hw_settle WHERE date = ?").bind(date).first();
+    if (settled) return json({ error: "locked" }, 423);
     if (done) {
       await env.DB.prepare(
         "INSERT OR IGNORE INTO hw_done (date, kind, ref_id, done_at) VALUES (?, ?, ?, ?)"
@@ -171,6 +183,45 @@ export async function onRequestPost({ request, env }) {
 
   // ── 이하 어드민 전용 ──
   if (!(await isAdmin(env, request))) return json({ error: "admin required" }, 403);
+
+  // 일일 정산/집행: 100% → +1, 미달 → -1 (적립 포인트), 그 날 동결
+  if (action === "settle") {
+    const { date } = body;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: "bad date" }, 400);
+    const ex = await env.DB.prepare("SELECT date FROM hw_settle WHERE date = ?").bind(date).first();
+    if (ex) return json({ error: "already settled" }, 409);
+    const t = await tasksForDate(env, date);
+    if (t.total === 0) return json({ error: "no homework" }, 400);
+    const rate = Math.round(t.done / t.total * 100);
+    const delta = rate === 100 ? 1 : -1;
+    const reason = `숙제 정산 ${date}: ${rate}% → ${delta > 0 ? "+1" : "-1"}`;
+    let ledgerId = null;
+    try {
+      const led = await env.DB.prepare(
+        "INSERT INTO point_ledger (delta, reason, type, track, created_at) VALUES (?, ?, ?, 'reward', ?)"
+      ).bind(delta, reason, delta > 0 ? "merit" : "demerit", nowKST()).run();
+      ledgerId = led.meta?.last_row_id ?? null;
+    } catch (e) {
+      return json({ error: "point_ledger not ready" }, 500);
+    }
+    await env.DB.prepare(
+      "INSERT INTO hw_settle (date, rate, delta, ledger_id, settled_at) VALUES (?, ?, ?, ?, ?)"
+    ).bind(date, rate, delta, ledgerId, nowKST()).run();
+    return json({ ok: true, rate, delta });
+  }
+
+  // 집행 취소: 적립 되돌리고 동결 해제
+  if (action === "unsettle") {
+    const { date } = body;
+    if (!date) return json({ error: "date required" }, 400);
+    const row = await env.DB.prepare("SELECT ledger_id FROM hw_settle WHERE date = ?").bind(date).first();
+    if (!row) return json({ error: "not settled" }, 404);
+    if (row.ledger_id) {
+      await env.DB.prepare("DELETE FROM point_ledger WHERE id = ?").bind(row.ledger_id).run();
+    }
+    await env.DB.prepare("DELETE FROM hw_settle WHERE date = ?").bind(date).run();
+    return json({ ok: true });
+  }
 
   if (action === "template-add") {
     if (!body.title?.trim()) return json({ error: "title required" }, 400);

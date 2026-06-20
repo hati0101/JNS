@@ -30,3 +30,12 @@ CREATE TABLE IF NOT EXISTS hw_done (
   UNIQUE(date, kind, ref_id)
 );
 CREATE INDEX IF NOT EXISTS idx_hw_done_date ON hw_done(date);
+
+-- 일일 정산(집행) 기록: 그 날을 동결하고 ±1 적립
+CREATE TABLE IF NOT EXISTS hw_settle (
+  date       TEXT PRIMARY KEY,           -- 'YYYY-MM-DD'
+  rate       INTEGER NOT NULL,           -- 집행 시점 완료율 %
+  delta      INTEGER NOT NULL,           -- +1 (100%) / -1 (미달)
+  ledger_id  INTEGER,                    -- 연결된 point_ledger.id (취소 시 제거)
+  settled_at TEXT NOT NULL
+);
