@@ -404,21 +404,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 
 /* ── 반응형 ── */
 @media (max-width: 600px) {
-  header { padding: 0 12px; gap: 6px; }
-  .site-title { display: none; }                 /* 좁은 화면에선 숨김 (칼럼 탭이 같은 역할) */
-  .topnav {
-    margin-left: 0; gap: 2px; flex: 1 1 auto;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-  }
-  .topnav::-webkit-scrollbar { display: none; }
-  .navlink { padding: 6px 9px; font-size: 13px; }
-  .dday-badge { padding: 5px 8px; font-size: 12px; margin-left: 0; }
-  .header-actions { gap: 6px; flex: 0 0 auto; }
-  .header-actions .btn { padding: 6px 9px; font-size: 12px; letter-spacing: 0; }
-
+  header { padding: 0 16px; gap: 8px; }
+  .dday-badge { padding: 5px 8px; font-size: 12px; }
   main { padding: 40px 20px; }
   .post-item { flex-direction: column; gap: 4px; }
   .post-date { font-size: .68rem; }
+  .pt-cards { grid-template-columns: 1fr; }
+  .menu-drawer { min-width: 60vw; }
 }
 
 
@@ -821,6 +813,36 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .dday-badge:hover { border-color: var(--accent); }
 .dday-badge:not(.set) { background: none; color: var(--muted); }
 
+/* ── 헤더 / 메뉴 드로어 ── */
+.header-spacer { flex: 1; }
+.menu-btn {
+  background: none; border: 1px solid var(--border); color: var(--text);
+  font-size: 18px; line-height: 1; padding: 5px 12px; border-radius: 6px; cursor: pointer;
+}
+.menu-btn:hover { border-color: var(--accent); color: var(--accent); }
+.menu-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.menu-overlay.open { opacity: 1; pointer-events: auto; }
+.menu-drawer {
+  position: fixed; top: 56px; right: 0; z-index: 201; min-width: 210px;
+  background: var(--bg); border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 0 14px; display: flex; flex-direction: column; padding: 8px;
+  transform: translateX(110%); transition: transform .22s ease;
+  box-shadow: -10px 12px 36px rgba(0,0,0,.45);
+}
+.menu-drawer.open { transform: translateX(0); }
+.menu-item {
+  background: none; border: none; color: var(--text); text-align: left;
+  font-family: var(--mono); font-size: 15px; padding: 12px 14px; border-radius: 8px;
+  cursor: pointer; transition: background .12s;
+}
+.menu-item:hover { background: var(--surface); }
+.menu-item.active { color: var(--accent); background: var(--accent-dim); }
+.menu-sep { height: 1px; background: var(--border); margin: 8px 6px; }
+.menu-logout { color: var(--danger); }
+
 /* ── 숙제: 달력 ── */
 #homework-view, #hwadmin-view { display: none; }
 .hw-cal-header {
@@ -950,7 +972,7 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .bk-group-title span { color: var(--accent); }
 .bk-card {
   display: flex; gap: 14px; border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px; margin-bottom: 10px; background: var(--surface);
+  padding: 14px; margin-bottom: 10px; background: var(--surface); align-items: flex-start;
 }
 .bk-card.done { opacity: .6; }
 .bk-img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; flex: none; }
@@ -963,30 +985,36 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
   border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px;
 }
 .bk-detail { color: var(--muted); font-size: 14px; margin-top: 6px; white-space: pre-wrap; }
-.bk-done-at { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-top: 6px; }
-.bk-actions { display: flex; gap: 6px; margin-top: 12px; }
-.bk-actions .btn { padding: 5px 10px; font-size: 13px; }
+.bk-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.bk-date { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.bk-date.done { color: var(--accent); }
+.bk-actions { display: flex; flex-direction: column; gap: 6px; flex: none; align-self: flex-start; }
+.bk-actions .btn { padding: 5px 12px; font-size: 13px; }
 
 /* ── 상벌 포인트 ── */
 #points-view { display: none; }
 #master-mode-btn.active { color: var(--accent); border-color: var(--accent); }
+.pt-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
 .pt-balance {
-  display: flex; align-items: baseline; gap: 12px; padding: 20px 24px;
-  border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-dim);
-  margin-bottom: 28px;
+  display: flex; flex-direction: column; gap: 6px; padding: 18px 22px;
+  border: 1px solid var(--border); border-radius: 12px;
 }
-.pt-balance-label { font-family: var(--mono); font-size: 14px; color: var(--muted); }
-.pt-balance-num { font-family: var(--mono); font-size: 38px; font-weight: 700; color: var(--accent); }
-.pt-award {
-  display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap;
-  padding: 14px; border: 1px dashed var(--border); border-radius: 10px;
+.pt-balance.reward { border-color: var(--accent); background: var(--accent-dim); }
+.pt-balance.penalty { border-color: var(--danger); background: rgba(239,68,68,.08); }
+.pt-balance-label { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.pt-balance-num { font-family: var(--mono); font-size: 34px; font-weight: 700; }
+.pt-balance.reward .pt-balance-num { color: var(--accent); }
+.pt-balance.penalty .pt-balance-num { color: var(--danger); }
+.pt-adjust {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  padding: 12px; border: 1px dashed var(--border); border-radius: 10px;
 }
-.pt-award input {
+.pt-adjust input {
   background: var(--surface); border: 1px solid var(--border); color: var(--text);
   border-radius: 6px; padding: 9px 12px; font-family: var(--mono); font-size: 14px;
 }
-.pt-award input[type="number"] { width: 150px; }
-.pt-award input[type="text"] { flex: 1; min-width: 140px; }
+.pt-adjust input[type="number"] { width: 150px; }
+.pt-adjust input[type="text"] { flex: 1; min-width: 140px; }
 .pt-sec { margin-bottom: 30px; }
 .pt-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .pt-sec h3 { font-family: var(--mono); font-size: 16px; }
@@ -1013,6 +1041,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .pt-ledger-delta { font-family: var(--mono); font-weight: 700; min-width: 44px; }
 .pt-ledger-delta.plus { color: var(--accent); }
 .pt-ledger-delta.minus { color: var(--danger); }
+.pt-ledger-delta.spend { color: var(--muted); }
+.pt-ledger-track {
+  font-family: var(--mono); font-size: 10px; padding: 1px 6px; border-radius: 4px; flex: none;
+  border: 1px solid var(--border); color: var(--muted);
+}
+.pt-ledger-track.reward { color: var(--accent); border-color: var(--accent); }
+.pt-ledger-track.penalty { color: var(--danger); border-color: var(--danger); }
 .pt-ledger-reason { flex: 1; min-width: 0; }
 .pt-ledger-date { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .pt-ledger-del { padding: 2px 8px; font-size: 13px; }
@@ -1052,19 +1087,21 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 <div id="app">
   <header>
     <span class="site-title" onclick="showList()">아키텍트</span>
-    <nav class="topnav">
-      <button class="navlink active" id="nav-column" onclick="showList()">칼럼</button>
-      <button class="navlink" id="nav-homework" onclick="showHomework()">숙제</button>
-      <button class="navlink" id="nav-contract" onclick="showContract()">계약서</button>
-      <button class="navlink" id="nav-bucket" onclick="showBucket()">버킷</button>
-      <button class="navlink" id="nav-points" onclick="showPoints()">상벌</button>
-      <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day 설정"></button>
-    </nav>
-    <div class="header-actions">
-      <button class="btn primary" id="new-post-btn" onclick="showEditor()">새 글</button>
-      <button class="btn danger" onclick="logout()">로그아웃</button>
-    </div>
+    <span class="header-spacer"></span>
+    <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day"></button>
+    <button class="menu-btn" id="menu-btn" onclick="toggleMenu()" aria-label="메뉴">☰</button>
   </header>
+  <div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
+  <nav class="menu-drawer" id="menu-drawer">
+    <button class="menu-item active" id="nav-column" onclick="menuNav('list')">칼럼</button>
+    <button class="menu-item" id="nav-homework" onclick="menuNav('homework')">숙제</button>
+    <button class="menu-item" id="nav-contract" onclick="menuNav('contract')">계약서</button>
+    <button class="menu-item" id="nav-bucket" onclick="menuNav('bucket')">버킷</button>
+    <button class="menu-item" id="nav-points" onclick="menuNav('points')">상벌</button>
+    <div class="menu-sep"></div>
+    <button class="menu-item" onclick="menuNav('write')">새 글</button>
+    <button class="menu-item menu-logout" onclick="logout()">로그아웃</button>
+  </nav>
 
   <main>
     <!-- 목록 -->
@@ -1241,17 +1278,15 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
         <button class="btn" id="master-mode-btn" onclick="togglePointsMaster()">마스터 모드</button>
       </div>
 
-      <div class="pt-balance">
-        <span class="pt-balance-label">현재 포인트</span>
-        <span class="pt-balance-num" id="pt-balance">0</span>
-      </div>
-
-      <!-- 마스터: 적립/차감 -->
-      <div class="pt-award" id="pt-award" style="display:none">
-        <input type="number" id="pt-delta" placeholder="포인트 (예: 5 / -3)">
-        <input type="text" id="pt-reason" placeholder="사유">
-        <button class="btn" onclick="ptAward(1)">＋ 적립</button>
-        <button class="btn danger" onclick="ptAward(-1)">− 차감</button>
+      <div class="pt-cards">
+        <div class="pt-balance reward">
+          <span class="pt-balance-label">적립 포인트</span>
+          <span class="pt-balance-num" id="pt-reward-balance">0</span>
+        </div>
+        <div class="pt-balance penalty">
+          <span class="pt-balance-label">누적 벌점</span>
+          <span class="pt-balance-num" id="pt-penalty-total">0</span>
+        </div>
       </div>
 
       <!-- 교환 신청 (대기중) -->
@@ -1262,16 +1297,28 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 
       <section class="pt-sec">
         <div class="pt-sec-head">
-          <h3>포상 상점</h3>
-          <button class="btn pt-shop-add" data-kind="reward" onclick="shopOpenAdd('reward')" style="display:none">＋ 포상</button>
+          <h3>포상 상점 <span class="pt-sec-sub">적립 포인트로 교환</span></h3>
+          <button class="btn pt-shop-add" onclick="shopOpenAdd('reward')" style="display:none">＋ 포상</button>
+        </div>
+        <div class="pt-adjust" id="pt-reward-adjust" style="display:none">
+          <input type="number" id="pt-rw-delta" placeholder="포인트 (예: 5 / -3)">
+          <input type="text" id="pt-rw-reason" placeholder="사유">
+          <button class="btn" onclick="ptRewardAdjust(1)">＋ 적립</button>
+          <button class="btn danger" onclick="ptRewardAdjust(-1)">− 차감</button>
         </div>
         <ul class="pt-shop-list" id="pt-rewards"></ul>
       </section>
 
       <section class="pt-sec">
         <div class="pt-sec-head">
-          <h3>징계 목록</h3>
-          <button class="btn pt-shop-add" data-kind="punishment" onclick="shopOpenAdd('punishment')" style="display:none">＋ 징계</button>
+          <h3>징계 목록 <span class="pt-sec-sub">부과 시 벌점 누적</span></h3>
+          <button class="btn pt-shop-add" onclick="shopOpenAdd('punishment')" style="display:none">＋ 징계</button>
+        </div>
+        <div class="pt-adjust" id="pt-penalty-adjust" style="display:none">
+          <input type="number" id="pt-pn-delta" placeholder="벌점 (예: 3 / -2 감면)">
+          <input type="text" id="pt-pn-reason" placeholder="사유">
+          <button class="btn danger" onclick="ptPenaltyAdjust(1)">＋ 부여</button>
+          <button class="btn" onclick="ptPenaltyAdjust(-1)">− 감면</button>
         </div>
         <ul class="pt-shop-list" id="pt-punishments"></ul>
       </section>
@@ -1358,8 +1405,6 @@ function showOnly(viewId, pushHistory = true) {
     "nav-contract": viewId === "contract-view", "nav-bucket": viewId === "bucket-view",
     "nav-points": viewId === "points-view" };
   for (const id in navMap) { const el = $(id); if (el) el.classList.toggle("active", navMap[id]); }
-  const newBtn = $("new-post-btn");
-  if (newBtn) newBtn.style.display = (viewId === "list-view" || viewId === "post-view") ? "" : "none";
 
   if (pushHistory) {
     const state = { view: viewId, postId: currentPostId, page: currentPage, hwMonth, hwDate: hwSelDate };
@@ -2512,6 +2557,21 @@ async function hwItemDelete(id) {
   if (await hwAdminPost("item-delete", { id })) hwAdminLoad();
 }
 
+// ── 메뉴 드로어 ──
+function toggleMenu() {
+  const open = $("menu-drawer").classList.toggle("open");
+  $("menu-overlay").classList.toggle("open", open);
+}
+function closeMenu() {
+  $("menu-drawer").classList.remove("open");
+  $("menu-overlay").classList.remove("open");
+}
+function menuNav(key) {
+  closeMenu();
+  ({ list: showList, homework: showHomework, contract: showContract,
+     bucket: showBucket, points: showPoints, write: showEditor })[key]?.();
+}
+
 // ── D-day ──
 let ddayData = null;  // { date:'YYYY-MM-DD', label }
 
@@ -2546,6 +2606,7 @@ function renderDday() {
 }
 
 async function ddayEdit() {
+  if (!(await ensureMasterAuth())) return;   // 마스터만 수정
   const date = prompt("D-day 기준 날짜 (YYYY-MM-DD)\n비우고 확인하면 D-day 삭제", ddayData?.date || ymdKST());
   if (date === null) return;
   if (date.trim() === "") { await saveDday(null); return; }
@@ -2679,6 +2740,7 @@ async function renderBucket() {
 function bucketCard(i) {
   const next = { todo: "doing", doing: "done", done: "todo" };
   const nextLabel = { todo: "시작", doing: "완료", done: "되돌리기" };
+  const created = (i.created_at || "").slice(0, 10);
   return `<div class="bk-card ${i.status}">
     ${i.image_url ? `<img class="bk-img" src="${i.image_url}" alt="" loading="lazy">` : ""}
     <div class="bk-body">
@@ -2687,12 +2749,15 @@ function bucketCard(i) {
         ${i.author ? `<span class="bk-author">${escHtml(i.author)}</span>` : ""}
       </div>
       ${i.detail ? `<div class="bk-detail">${escHtml(i.detail)}</div>` : ""}
-      ${i.status === "done" && i.done_at ? `<div class="bk-done-at">완료 ${i.done_at}</div>` : ""}
-      <div class="bk-actions">
-        <button class="btn" onclick="bucketStatus(${i.id},'${next[i.status]}')">${nextLabel[i.status]}</button>
-        <button class="btn" onclick="bucketOpenEdit(${i.id})">수정</button>
-        <button class="btn danger" onclick="bucketDelete(${i.id})">삭제</button>
+      <div class="bk-meta">
+        ${created ? `<span class="bk-date">제안 ${created}</span>` : ""}
+        ${i.status === "done" && i.done_at ? `<span class="bk-date done">달성 ${i.done_at}</span>` : ""}
       </div>
+    </div>
+    <div class="bk-actions">
+      <button class="btn" onclick="bucketStatus(${i.id},'${next[i.status]}')">${nextLabel[i.status]}</button>
+      <button class="btn" onclick="bucketOpenEdit(${i.id})">수정</button>
+      <button class="btn danger" onclick="bucketDelete(${i.id})">삭제</button>
     </div>
   </div>`;
 }
@@ -2784,17 +2849,19 @@ async function togglePointsMaster() {
   if (await ensureMasterAuth()) { pointsMaster = true; renderPoints(); }
 }
 
-function ptTypeLabel(t) { return ({ merit: "적립", demerit: "차감", reward: "포상 교환", adjust: "조정" })[t] || t; }
+function ptTypeLabel(t) { return ({ merit: "적립", demerit: "벌점", reward: "포상 교환", adjust: "조정" })[t] || t; }
 
 async function renderPoints() {
   let data;
   try { data = await (await fetch("/api/points")).json(); }
   catch { toast("불러오기 실패", true); return; }
 
-  $("pt-balance").textContent = data.balance;
+  $("pt-reward-balance").textContent = data.rewardBalance;
+  $("pt-penalty-total").textContent = data.penaltyTotal;
   $("master-mode-btn").textContent = pointsMaster ? "마스터 모드 ✓" : "마스터 모드";
   $("master-mode-btn").classList.toggle("active", pointsMaster);
-  $("pt-award").style.display = pointsMaster ? "flex" : "none";
+  $("pt-reward-adjust").style.display = pointsMaster ? "flex" : "none";
+  $("pt-penalty-adjust").style.display = pointsMaster ? "flex" : "none";
   document.querySelectorAll(".pt-shop-add").forEach(b => b.style.display = pointsMaster ? "" : "none");
 
   // 교환 신청 (대기중)
@@ -2823,7 +2890,7 @@ async function renderPoints() {
     const pending = pendingIds.has(r.id);
     const btn = pending
       ? `<button class="btn" disabled>신청됨</button>`
-      : `<button class="btn" ${data.balance < r.cost ? "disabled" : ""} onclick="ptRedeem(${r.id})">신청</button>`;
+      : `<button class="btn" ${data.rewardBalance < r.cost ? "disabled" : ""} onclick="ptRedeem(${r.id})">신청</button>`;
     return `
     <li class="pt-shop-item">
       <div class="pt-shop-info">
@@ -2844,21 +2911,33 @@ async function renderPoints() {
         <span class="pt-shop-name">${escHtml(p.name)}</span>
         ${p.detail ? `<span class="pt-shop-detail">${escHtml(p.detail)}</span>` : ""}
       </div>
-      <span class="pt-cost punish">-${p.cost}P</span>
+      <span class="pt-cost punish">+${p.cost} 벌점</span>
       <div class="pt-shop-btns">
         ${pointsMaster ? `<button class="btn danger" onclick="ptImpose(${p.id})">부과</button><button class="btn" onclick="shopEdit(${p.id})">수정</button><button class="btn danger" onclick="shopDelete(${p.id})">삭제</button>` : `<span class="pt-readonly">마스터가 부과</span>`}
       </div>
     </li>`).join("") || `<li class="hw-empty">등록된 징계가 없어요.</li>`;
 
-  $("pt-ledger").innerHTML = (data.ledger || []).map(l => `
+  $("pt-ledger").innerHTML = (data.ledger || []).map(l => {
+    const cls = ptDeltaClass(l);
+    const tag = l.track === "penalty" ? "벌점" : "포상";
+    const sign = l.delta >= 0 ? "+" : "";
+    return `
     <li class="pt-ledger-item">
-      <span class="pt-ledger-delta ${l.delta >= 0 ? "plus" : "minus"}">${l.delta >= 0 ? "+" : ""}${l.delta}</span>
+      <span class="pt-ledger-delta ${cls}">${sign}${l.delta}</span>
+      <span class="pt-ledger-track ${l.track}">${tag}</span>
       <span class="pt-ledger-reason">${escHtml(l.reason || ptTypeLabel(l.type))}</span>
       <span class="pt-ledger-date">${(l.created_at || "").slice(5, 16)}</span>
       ${pointsMaster ? `<button class="btn pt-ledger-del" onclick="ptLedgerDelete(${l.id})">×</button>` : ""}
-    </li>`).join("") || `<li class="hw-empty">기록 없음</li>`;
+    </li>`;
+  }).join("") || `<li class="hw-empty">기록 없음</li>`;
 
   pointsShop = [...(data.rewards || []), ...(data.punishments || [])];
+}
+
+// 기록 색: 좋음(적립+ / 벌점-)=accent, 나쁨(벌점+)=danger, 소비(적립-)=muted
+function ptDeltaClass(l) {
+  if (l.track === "penalty") return l.delta > 0 ? "minus" : "plus";
+  return l.delta >= 0 ? "plus" : "spend";
 }
 
 async function ptHandle(res) {
@@ -2870,15 +2949,25 @@ async function ptHandle(res) {
   return true;
 }
 
-async function ptAward(sign) {
-  let v = parseInt($("pt-delta").value, 10);
+async function ptRewardAdjust(sign) {
+  let v = parseInt($("pt-rw-delta").value, 10);
   if (!v) { toast("포인트를 입력하세요", true); return; }
   v = Math.abs(v) * sign;
-  const res = await fetch("/api/points?action=award", {
+  const res = await fetch("/api/points?action=reward-adjust", {
     method: "POST", headers: masterHeaders(),
-    body: JSON.stringify({ delta: v, reason: $("pt-reason").value.trim() })
+    body: JSON.stringify({ delta: v, reason: $("pt-rw-reason").value.trim() })
   });
-  if (await ptHandle(res)) { $("pt-delta").value = ""; $("pt-reason").value = ""; renderPoints(); }
+  if (await ptHandle(res)) { $("pt-rw-delta").value = ""; $("pt-rw-reason").value = ""; renderPoints(); }
+}
+async function ptPenaltyAdjust(sign) {
+  let v = parseInt($("pt-pn-delta").value, 10);
+  if (!v) { toast("벌점을 입력하세요", true); return; }
+  v = Math.abs(v) * sign;
+  const res = await fetch("/api/points?action=penalty-adjust", {
+    method: "POST", headers: masterHeaders(),
+    body: JSON.stringify({ delta: v, reason: $("pt-pn-reason").value.trim() })
+  });
+  if (await ptHandle(res)) { $("pt-pn-delta").value = ""; $("pt-pn-reason").value = ""; renderPoints(); }
 }
 async function ptRedeem(id) {
   if (!confirm("이 포상을 교환 신청할까요? 마스터 승인 후 차감돼요.")) return;
@@ -2912,11 +3001,11 @@ async function ptCancelReq(id) {
   toast("신청 취소됨"); renderPoints();
 }
 async function ptImpose(id) {
-  if (!confirm("이 징계를 부과할까요?")) return;
+  if (!confirm("이 징계를 부과할까요? 벌점이 누적돼요.")) return;
   const res = await fetch("/api/points?action=impose", {
     method: "POST", headers: masterHeaders(), body: JSON.stringify({ item_id: id })
   });
-  if (await ptHandle(res)) renderPoints();
+  if (await ptHandle(res)) { toast("징계 부과 — 벌점 누적됨"); renderPoints(); }
 }
 async function ptLedgerDelete(id) {
   if (!confirm("이 기록을 삭제할까요?")) return;
