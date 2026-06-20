@@ -1055,6 +1055,72 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
 }
 .pt-ledger-track.reward { color: var(--accent); border-color: var(--accent); }
 .pt-ledger-track.penalty { color: var(--danger); border-color: var(--danger); }
+
+/* 숙제 자동적립 표시/설정 + 알림 뱃지 */
+.pt-balance-sub { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.pt-hwcfg {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; margin-bottom: 16px; border: 1px dashed var(--border); border-radius: 10px;
+  font-family: var(--mono); font-size: 13px; color: var(--muted);
+}
+.pt-hwcfg input {
+  width: 70px; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 7px 10px; font-family: var(--mono);
+}
+.pt-ledger-auto { background: var(--accent-dim); border-radius: 8px; padding-left: 8px; padding-right: 8px; }
+.menu-btn { position: relative; }
+.menu-badge {
+  position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px;
+  background: var(--danger); color: #fff; border-radius: 9px; font-size: 10px; font-family: var(--mono);
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.nav-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 17px; height: 17px; margin-left: 8px; padding: 0 4px;
+  background: var(--danger); color: #fff; border-radius: 9px; font-size: 10px; font-family: var(--mono);
+}
+
+/* ── 데일리 체크인 ── */
+#checkin-view { display: none; }
+.ck-today {
+  border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 36px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.ck-today-date { font-family: var(--mono); font-size: 16px; color: var(--accent); }
+.ck-field { display: flex; flex-direction: column; gap: 8px; }
+.ck-field label { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.ck-field.ck-row { flex-direction: row; align-items: center; justify-content: space-between; }
+.ck-field input[type="text"], .ck-field textarea {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 10px 12px; font-family: var(--mono); font-size: 14px; width: 100%; resize: vertical;
+}
+.ck-scale { display: flex; gap: 8px; }
+.ck-dot {
+  flex: 1; padding: 12px 0; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--muted); font-family: var(--mono); font-size: 15px;
+  cursor: pointer; transition: all .12s;
+}
+.ck-dot:hover { border-color: var(--accent); }
+.ck-dot.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.ck-toggle {
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 8px; padding: 8px 18px; font-family: var(--mono); font-size: 14px; cursor: pointer;
+}
+.ck-toggle.on { background: rgba(239,68,68,.15); border-color: var(--danger); color: var(--danger); }
+.ck-save-row { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+#ck-save-status { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.ck-history-title { font-family: var(--mono); font-size: 16px; margin-bottom: 14px; }
+.ck-history { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.ck-hist-item {
+  border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.ck-hist-top { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.ck-hist-date { font-family: var(--mono); font-size: 13px; color: var(--accent); min-width: 44px; }
+.ck-hist-vals { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.ck-care { color: var(--danger); }
+.ck-hist-head { font-size: 14px; }
+.ck-hist-note { font-size: 13px; color: var(--muted); white-space: pre-wrap; }
 .pt-ledger-reason { flex: 1; min-width: 0; }
 .pt-ledger-date { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .pt-ledger-del { padding: 2px 8px; font-size: 13px; }
@@ -1097,7 +1163,7 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
       <span class="site-title" onclick="showList()">아키텍트</span>
       <span class="header-spacer"></span>
       <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day"></button>
-      <button class="menu-btn" id="menu-btn" onclick="toggleMenu()" aria-label="메뉴">☰</button>
+      <button class="menu-btn" id="menu-btn" onclick="toggleMenu()" aria-label="메뉴">☰<span class="menu-badge" id="menu-badge" style="display:none"></span></button>
     </div>
   </header>
   <div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
@@ -1106,7 +1172,8 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
     <button class="menu-item" id="nav-homework" onclick="menuNav('homework')">숙제</button>
     <button class="menu-item" id="nav-contract" onclick="menuNav('contract')">계약서</button>
     <button class="menu-item" id="nav-bucket" onclick="menuNav('bucket')">버킷</button>
-    <button class="menu-item" id="nav-points" onclick="menuNav('points')">상벌</button>
+    <button class="menu-item" id="nav-points" onclick="menuNav('points')">상벌<span class="nav-badge" id="points-badge" style="display:none"></span></button>
+    <button class="menu-item" id="nav-checkin" onclick="menuNav('checkin')">체크인</button>
     <div class="menu-sep"></div>
     <button class="menu-item menu-logout" onclick="logout()">로그아웃</button>
   </nav>
@@ -1293,6 +1360,7 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
         <div class="pt-balance reward">
           <span class="pt-balance-label">적립 포인트</span>
           <span class="pt-balance-num" id="pt-reward-balance">0</span>
+          <span class="pt-balance-sub" id="pt-reward-sub"></span>
         </div>
         <div class="pt-balance penalty">
           <span class="pt-balance-label">누적 벌점</span>
@@ -1317,6 +1385,12 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
           <button class="btn" onclick="ptRewardAdjust(1)">＋ 적립</button>
           <button class="btn danger" onclick="ptRewardAdjust(-1)">− 차감</button>
         </div>
+        <div class="pt-hwcfg" id="pt-hwcfg" style="display:none">
+          <span>숙제 1개 완료당</span>
+          <input type="number" id="pt-pertask" min="0">
+          <span>P 자동 적립</span>
+          <button class="btn" onclick="ptSaveHwConfig()">저장</button>
+        </div>
         <ul class="pt-shop-list" id="pt-rewards"></ul>
       </section>
 
@@ -1338,6 +1412,40 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
         <h3>기록</h3>
         <ul class="pt-ledger" id="pt-ledger"></ul>
       </section>
+    </div>
+
+    <!-- 데일리 체크인 -->
+    <div id="checkin-view">
+      <div class="list-header"><h2>데일리 체크인</h2></div>
+      <div class="ck-today">
+        <h3 class="ck-today-date" id="ck-today-date"></h3>
+        <div class="ck-field">
+          <label>기분</label>
+          <div class="ck-scale" id="ck-mood"></div>
+        </div>
+        <div class="ck-field">
+          <label>컨디션</label>
+          <div class="ck-scale" id="ck-energy"></div>
+        </div>
+        <div class="ck-field">
+          <label>헤드스페이스</label>
+          <input type="text" id="ck-headspace" placeholder="지금 상태를 한마디로 (선택)">
+        </div>
+        <div class="ck-field ck-row">
+          <label>케어 필요</label>
+          <button class="ck-toggle" id="ck-aftercare" onclick="ckToggleAftercare()">필요 없음</button>
+        </div>
+        <div class="ck-field">
+          <label>메모</label>
+          <textarea id="ck-note" rows="3" placeholder="하고 싶은 말 (선택)"></textarea>
+        </div>
+        <div class="ck-save-row">
+          <span id="ck-save-status"></span>
+          <button class="btn primary" onclick="ckSave()">저장</button>
+        </div>
+      </div>
+      <h3 class="ck-history-title">지난 기록</h3>
+      <ul class="ck-history" id="ck-history"></ul>
     </div>
   </main>
 </div>
@@ -1404,7 +1512,7 @@ function toast(msg, error = false) {
   el._t = setTimeout(() => el.className = "", 2200);
 }
 
-const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view","contract-view","bucket-view","points-view"];
+const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view","contract-view","bucket-view","points-view","checkin-view"];
 function showOnly(viewId, pushHistory = true) {
   ALL_VIEWS.forEach(id => {
     const el = $(id);
@@ -1414,7 +1522,7 @@ function showOnly(viewId, pushHistory = true) {
   const inColumn = ["list-view","post-view","editor-view"].includes(viewId);
   const navMap = { "nav-column": inColumn, "nav-homework": viewId === "homework-view",
     "nav-contract": viewId === "contract-view", "nav-bucket": viewId === "bucket-view",
-    "nav-points": viewId === "points-view" };
+    "nav-points": viewId === "points-view", "nav-checkin": viewId === "checkin-view" };
   for (const id in navMap) { const el = $(id); if (el) el.classList.toggle("active", navMap[id]); }
 
   if (pushHistory) {
@@ -1427,6 +1535,7 @@ function showOnly(viewId, pushHistory = true) {
     else if (viewId === "contract-view") history.pushState(state, "", "/?contract");
     else if (viewId === "bucket-view") history.pushState(state, "", "/?bucket");
     else if (viewId === "points-view") history.pushState(state, "", "/?points");
+    else if (viewId === "checkin-view") history.pushState(state, "", "/?checkin");
   }
 }
 
@@ -1486,6 +1595,7 @@ async function login() {
 // URL 파라미터 기준 초기 라우팅 (로그인 직후 / 새로고침 공용)
 async function routeFromUrl() {
   loadDday();
+  refreshNotifications();
   const params = new URLSearchParams(location.search);
   const postId = params.get("post");
   const page = parseInt(params.get("page") || "1");
@@ -1505,6 +1615,9 @@ async function routeFromUrl() {
   } else if (params.has("points")) {
     await showPoints(false);
     history.replaceState({ view: "points-view" }, "", location.href);
+  } else if (params.has("checkin")) {
+    await showCheckin(false);
+    history.replaceState({ view: "checkin-view" }, "", location.href);
   } else if (postId) {
     currentPostId = parseInt(postId);
     await loadPost(currentPostId, false);
@@ -2568,6 +2681,94 @@ async function hwItemDelete(id) {
   if (await hwAdminPost("item-delete", { id })) hwAdminLoad();
 }
 
+// ── 알림 뱃지 ──
+function setBadge(id, n) {
+  const el = $(id); if (!el) return;
+  if (n > 0) { el.textContent = n; el.style.display = ""; } else { el.style.display = "none"; }
+}
+async function refreshNotifications() {
+  try {
+    const d = await (await fetch("/api/points")).json();
+    const n = (d.requests || []).length;
+    setBadge("menu-badge", n);
+    setBadge("points-badge", n);
+  } catch {}
+}
+
+async function ptSaveHwConfig() {
+  const v = parseInt($("pt-pertask").value, 10);
+  if (!Number.isFinite(v) || v < 0) { toast("0 이상 숫자를 입력하세요", true); return; }
+  const res = await fetch("/api/points?action=hw-config", {
+    method: "POST", headers: masterHeaders(), body: JSON.stringify({ perTask: v })
+  });
+  if (await ptHandle(res)) { toast("저장됨"); renderPoints(); }
+}
+
+// ── 데일리 체크인 ──
+let ckDraft = { mood: null, energy: null, headspace: "", aftercare: 0, note: "" };
+
+async function showCheckin(push = true) {
+  showOnly("checkin-view", push);
+  await renderCheckin();
+}
+
+async function renderCheckin() {
+  let data;
+  try { data = await (await fetch("/api/checkins")).json(); }
+  catch { toast("불러오기 실패", true); return; }
+
+  $("ck-today-date").textContent = `오늘 · ${fmtDate(data.today)}`;
+  const t = data.todayRow;
+  ckDraft = t
+    ? { mood: t.mood, energy: t.energy, headspace: t.headspace || "", aftercare: t.aftercare, note: t.note || "" }
+    : { mood: null, energy: null, headspace: "", aftercare: 0, note: "" };
+  $("ck-headspace").value = ckDraft.headspace;
+  $("ck-note").value = ckDraft.note;
+  ckRenderScale("mood");
+  ckRenderScale("energy");
+  ckRenderAftercare();
+  $("ck-save-status").textContent = t ? "오늘 기록됨 · 수정 가능" : "";
+
+  $("ck-history").innerHTML = (data.recent || []).map(c => `
+    <li class="ck-hist-item">
+      <div class="ck-hist-top">
+        <span class="ck-hist-date">${(c.date || "").slice(5)}</span>
+        <span class="ck-hist-vals">기분 ${c.mood ?? "–"} · 컨디션 ${c.energy ?? "–"}${c.aftercare ? ' · <b class="ck-care">케어 필요</b>' : ''}</span>
+      </div>
+      ${c.headspace ? `<div class="ck-hist-head">${escHtml(c.headspace)}</div>` : ""}
+      ${c.note ? `<div class="ck-hist-note">${escHtml(c.note)}</div>` : ""}
+    </li>`).join("") || `<li class="hw-empty">아직 기록이 없어요.</li>`;
+}
+
+function ckRenderScale(key) {
+  const elId = key === "mood" ? "ck-mood" : "ck-energy";
+  const cur = ckDraft[key];
+  $(elId).innerHTML = [1, 2, 3, 4, 5].map(n =>
+    `<button class="ck-dot ${cur === n ? "on" : ""}" onclick="ckSetScale('${key}',${n})">${n}</button>`
+  ).join("");
+}
+function ckSetScale(key, n) {
+  ckDraft[key] = (ckDraft[key] === n ? null : n);
+  ckRenderScale(key);
+}
+function ckRenderAftercare() {
+  const b = $("ck-aftercare");
+  b.textContent = ckDraft.aftercare ? "필요함" : "필요 없음";
+  b.classList.toggle("on", !!ckDraft.aftercare);
+}
+function ckToggleAftercare() { ckDraft.aftercare = ckDraft.aftercare ? 0 : 1; ckRenderAftercare(); }
+
+async function ckSave() {
+  ckDraft.headspace = $("ck-headspace").value.trim();
+  ckDraft.note = $("ck-note").value.trim();
+  const res = await fetch("/api/checkins?action=save", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ckDraft)
+  });
+  if (!res.ok) { toast("저장 실패", true); return; }
+  toast("체크인 저장됨");
+  renderCheckin();
+}
+
 // ── 메뉴 드로어 ──
 function toggleMenu() {
   const open = $("menu-drawer").classList.toggle("open");
@@ -2580,7 +2781,7 @@ function closeMenu() {
 function menuNav(key) {
   closeMenu();
   ({ list: showList, homework: showHomework, contract: showContract,
-     bucket: showBucket, points: showPoints, write: showEditor })[key]?.();
+     bucket: showBucket, points: showPoints, checkin: showCheckin, write: showEditor })[key]?.();
 }
 
 // ── D-day ──
@@ -2868,16 +3069,21 @@ async function renderPoints() {
   catch { toast("불러오기 실패", true); return; }
 
   $("pt-reward-balance").textContent = data.rewardBalance;
+  $("pt-reward-sub").textContent = data.hwEarned > 0 ? `숙제 +${data.hwEarned} 포함` : "";
   $("pt-penalty-total").textContent = data.penaltyTotal;
   $("master-mode-btn").textContent = pointsMaster ? "마스터 모드 ✓" : "마스터 모드";
   $("master-mode-btn").classList.toggle("active", pointsMaster);
   $("pt-reward-adjust").style.display = pointsMaster ? "flex" : "none";
   $("pt-penalty-adjust").style.display = pointsMaster ? "flex" : "none";
+  $("pt-hwcfg").style.display = pointsMaster ? "flex" : "none";
+  if (pointsMaster && document.activeElement !== $("pt-pertask")) $("pt-pertask").value = data.perTask;
   document.querySelectorAll(".pt-shop-add").forEach(b => b.style.display = pointsMaster ? "" : "none");
 
   // 교환 신청 (대기중)
   const reqs = data.requests || [];
   const pendingIds = new Set(reqs.map(r => r.item_id));
+  setBadge("menu-badge", reqs.length);
+  setBadge("points-badge", reqs.length);
   if (reqs.length) {
     $("pt-req-sec").style.display = "";
     $("pt-req-count").textContent = pointsMaster ? `· ${reqs.length}건 승인 대기` : `· ${reqs.length}건`;
@@ -2928,7 +3134,14 @@ async function renderPoints() {
       </div>
     </li>`).join("") || `<li class="hw-empty">등록된 징계가 없어요.</li>`;
 
-  $("pt-ledger").innerHTML = (data.ledger || []).map(l => {
+  const hwRow = data.hwEarned > 0 ? `
+    <li class="pt-ledger-item pt-ledger-auto">
+      <span class="pt-ledger-delta plus">+${data.hwEarned}</span>
+      <span class="pt-ledger-track reward">포상</span>
+      <span class="pt-ledger-reason">숙제 자동 적립 (완료 ${data.hwDone}개 × ${data.perTask}P)</span>
+      <span class="pt-ledger-date">자동</span>
+    </li>` : "";
+  $("pt-ledger").innerHTML = hwRow + ((data.ledger || []).map(l => {
     const cls = ptDeltaClass(l);
     const tag = l.track === "penalty" ? "벌점" : "포상";
     const sign = l.delta >= 0 ? "+" : "";
@@ -2940,7 +3153,7 @@ async function renderPoints() {
       <span class="pt-ledger-date">${(l.created_at || "").slice(5, 16)}</span>
       ${pointsMaster ? `<button class="btn pt-ledger-del" onclick="ptLedgerDelete(${l.id})">×</button>` : ""}
     </li>`;
-  }).join("") || `<li class="hw-empty">기록 없음</li>`;
+  }).join("") || (hwRow ? "" : `<li class="hw-empty">기록 없음</li>`));
 
   pointsShop = [...(data.rewards || []), ...(data.punishments || [])];
 }
@@ -3080,6 +3293,8 @@ window.addEventListener("popstate", (e) => {
     showBucket(false);
   } else if (state.view === "points-view") {
     showPoints(false);
+  } else if (state.view === "checkin-view") {
+    showCheckin(false);
   } else if (state.view === "list-view") {
     showOnly("list-view", false);
     loadList(state.page || 1);

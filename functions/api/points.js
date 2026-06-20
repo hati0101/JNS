@@ -31,13 +31,25 @@ async function isMaster(env, request) {
   } catch { return false; }
 }
 
+async function getPerTask(env) {
+  try {
+    const row = await env.DB.prepare("SELECT value FROM app_settings WHERE key='hw_per_task'").first();
+    const v = row ? parseInt(row.value, 10) : NaN;
+    return Number.isFinite(v) && v >= 0 ? v : 2;
+  } catch { return 2; }
+}
+
 async function balances(env) {
-  const row = await env.DB.prepare(
+  const led = await env.DB.prepare(
     `SELECT COALESCE(SUM(CASE WHEN track='reward' THEN delta ELSE 0 END),0) AS reward,
             COALESCE(SUM(CASE WHEN track='penalty' THEN delta ELSE 0 END),0) AS penalty
      FROM point_ledger`
   ).first();
-  return { reward: row.reward || 0, penalty: row.penalty || 0 };
+  const perTask = await getPerTask(env);
+  let hwDone = 0;
+  try { hwDone = (await env.DB.prepare("SELECT COUNT(*) AS c FROM hw_done").first()).c || 0; } catch { hwDone = 0; }
+  const hwEarned = perTask * hwDone;
+  return { reward: (led.reward || 0) + hwEarned, penalty: led.penalty || 0, hwEarned, perTask, hwDone };
 }
 
 // ── GET: 요약 ──
@@ -55,6 +67,9 @@ export async function onRequestGet({ env }) {
   return json({
     rewardBalance: bal.reward,
     penaltyTotal: bal.penalty,
+    hwEarned: bal.hwEarned,
+    perTask: bal.perTask,
+    hwDone: bal.hwDone,
     ledger,
     requests,
     rewards: shop.filter(s => s.kind === "reward"),
@@ -156,6 +171,16 @@ export async function onRequestPost({ request, env }) {
   if (action === "ledger-delete") {
     if (!b.id) return json({ error: "id required" }, 400);
     await env.DB.prepare("DELETE FROM point_ledger WHERE id = ?").bind(b.id).run();
+    return json({ ok: true, ...(await balances(env)) });
+  }
+
+  // 숙제 1개당 적립 포인트 설정
+  if (action === "hw-config") {
+    const v = parseInt(b.perTask, 10);
+    if (!Number.isFinite(v) || v < 0) return json({ error: "bad request" }, 400);
+    await env.DB.prepare(
+      "INSERT INTO app_settings (key, value) VALUES ('hw_per_task', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    ).bind(String(v)).run();
     return json({ ok: true, ...(await balances(env)) });
   }
 
