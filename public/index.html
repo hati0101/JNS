@@ -853,9 +853,10 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
 /* ── 숙제: 달력 ── */
 #homework-view, #hwadmin-view { display: none; }
 .hw-cal-header {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
 }
-.hw-cal-header h2 { font-family: var(--mono); font-size: 20px; }
+.hw-cal-header h2 { font-family: var(--mono); font-size: 20px; white-space: nowrap; }
+.hw-cal-header .btn { flex: none; white-space: nowrap; }
 .hw-cal-spacer { flex: 1; }
 .hw-month-rate {
   font-family: var(--mono); font-size: 15px; font-weight: 600;
@@ -1292,7 +1293,6 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
         <span class="hw-month-rate" id="hw-month-rate"></span>
         <span class="hw-cal-spacer"></span>
         <button class="btn" onclick="hwCalMove(1)">›</button>
-        <button class="btn" onclick="hwGoToday()">오늘</button>
         <button class="btn" onclick="showHwAdmin()">관리자</button>
       </div>
       <div class="hw-cal" id="hw-cal"></div>
