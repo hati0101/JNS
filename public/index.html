@@ -144,9 +144,10 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
 .list-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 40px;
 }
+.list-header-right { display: flex; align-items: center; gap: 14px; }
 .list-header h2 {
   font-size: 1rem;
   font-weight: 300;
@@ -1107,7 +1108,6 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
     <button class="menu-item" id="nav-bucket" onclick="menuNav('bucket')">버킷</button>
     <button class="menu-item" id="nav-points" onclick="menuNav('points')">상벌</button>
     <div class="menu-sep"></div>
-    <button class="menu-item" onclick="menuNav('write')">새 글</button>
     <button class="menu-item menu-logout" onclick="logout()">로그아웃</button>
   </nav>
 
@@ -1116,7 +1116,10 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
     <div id="list-view">
       <div class="list-header">
         <h2>칼럼</h2>
-        <span class="post-count" id="post-count"></span>
+        <div class="list-header-right">
+          <button class="btn primary" onclick="showEditor()">새 글</button>
+          <span class="post-count" id="post-count"></span>
+        </div>
       </div>
       <ul class="post-list" id="post-list"></ul>
       <div class="pagination" id="pagination"></div>
