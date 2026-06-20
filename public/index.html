@@ -929,6 +929,94 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .contract-ctrl .btn { padding: 5px 10px; font-size: 13px; }
 .contract-ctrl .btn:disabled { opacity: .35; cursor: default; }
 
+/* ── 버킷리스트 ── */
+#bucket-view { display: none; }
+.bucket-add {
+  border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+  margin-bottom: 24px; display: flex; flex-direction: column; gap: 10px;
+}
+.bucket-add input[type="text"], .bucket-add textarea, .bucket-add select {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 14px; width: 100%;
+}
+.bucket-add textarea { resize: vertical; }
+.bucket-add-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.bucket-add-row select { width: auto; }
+.bucket-add-row input[type="file"] { color: var(--muted); font-size: 13px; }
+#bk-upload-status { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.bucket-add-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.bk-group { margin-bottom: 28px; }
+.bk-group-title { font-family: var(--mono); font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+.bk-group-title span { color: var(--accent); }
+.bk-card {
+  display: flex; gap: 14px; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 10px; background: var(--surface);
+}
+.bk-card.done { opacity: .6; }
+.bk-img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; flex: none; }
+.bk-body { flex: 1; min-width: 0; }
+.bk-card-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bk-title { font-size: 16px; font-weight: 600; }
+.bk-card.done .bk-title { text-decoration: line-through; }
+.bk-author {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px;
+}
+.bk-detail { color: var(--muted); font-size: 14px; margin-top: 6px; white-space: pre-wrap; }
+.bk-done-at { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-top: 6px; }
+.bk-actions { display: flex; gap: 6px; margin-top: 12px; }
+.bk-actions .btn { padding: 5px 10px; font-size: 13px; }
+
+/* ── 상벌 포인트 ── */
+#points-view { display: none; }
+#master-mode-btn.active { color: var(--accent); border-color: var(--accent); }
+.pt-balance {
+  display: flex; align-items: baseline; gap: 12px; padding: 20px 24px;
+  border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-dim);
+  margin-bottom: 28px;
+}
+.pt-balance-label { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+.pt-balance-num { font-family: var(--mono); font-size: 38px; font-weight: 700; color: var(--accent); }
+.pt-award {
+  display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap;
+  padding: 14px; border: 1px dashed var(--border); border-radius: 10px;
+}
+.pt-award input {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 9px 12px; font-family: var(--mono); font-size: 14px;
+}
+.pt-award input[type="number"] { width: 150px; }
+.pt-award input[type="text"] { flex: 1; min-width: 140px; }
+.pt-sec { margin-bottom: 30px; }
+.pt-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.pt-sec h3 { font-family: var(--mono); font-size: 16px; }
+.pt-shop-add { padding: 5px 12px; font-size: 13px; }
+.pt-shop-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.pt-shop-item {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+}
+.pt-shop-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pt-shop-name { font-size: 15px; }
+.pt-shop-detail { font-size: 13px; color: var(--muted); }
+.pt-cost { font-family: var(--mono); font-size: 15px; font-weight: 700; flex: none; }
+.pt-cost.reward { color: var(--accent); }
+.pt-cost.punish { color: var(--danger); }
+.pt-shop-btns { display: flex; gap: 6px; flex: none; }
+.pt-shop-btns .btn { padding: 5px 10px; font-size: 13px; }
+.pt-readonly { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.pt-ledger { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.pt-ledger-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.pt-ledger-delta { font-family: var(--mono); font-weight: 700; min-width: 44px; }
+.pt-ledger-delta.plus { color: var(--accent); }
+.pt-ledger-delta.minus { color: var(--danger); }
+.pt-ledger-reason { flex: 1; min-width: 0; }
+.pt-ledger-date { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.pt-ledger-del { padding: 2px 8px; font-size: 13px; }
+
 @media (max-width: 600px) {
   .topnav { margin-left: 8px; }
   .hw-cell { min-height: 52px; padding: 4px; }
@@ -958,6 +1046,8 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
       <button class="navlink active" id="nav-column" onclick="showList()">칼럼</button>
       <button class="navlink" id="nav-homework" onclick="showHomework()">숙제</button>
       <button class="navlink" id="nav-contract" onclick="showContract()">계약서</button>
+      <button class="navlink" id="nav-bucket" onclick="showBucket()">버킷</button>
+      <button class="navlink" id="nav-points" onclick="showPoints()">상벌</button>
       <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day 설정"></button>
     </nav>
     <div class="header-actions">
@@ -1107,6 +1197,74 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
       </div>
       <div class="contract-feed" id="contract-feed"></div>
     </div>
+
+    <!-- 버킷리스트 -->
+    <div id="bucket-view">
+      <div class="list-header">
+        <h2>버킷리스트</h2>
+        <button class="btn primary" onclick="bucketOpenAdd()">＋ 추가</button>
+      </div>
+      <div class="bucket-add" id="bucket-add" style="display:none">
+        <input type="text" id="bk-title" placeholder="이루고 싶은 것">
+        <textarea id="bk-detail" rows="2" placeholder="설명 (선택)"></textarea>
+        <div class="bucket-add-row">
+          <select id="bk-author">
+            <option value="">제안자 선택</option>
+            <option value="마스터">마스터</option>
+            <option value="슬레이브">슬레이브</option>
+          </select>
+          <input type="file" id="bk-file" accept="image/*">
+          <span id="bk-upload-status"></span>
+        </div>
+        <div class="bucket-add-actions">
+          <button class="btn" onclick="bucketCancelAdd()">취소</button>
+          <button class="btn primary" onclick="bucketSave()">저장</button>
+        </div>
+      </div>
+      <div id="bucket-list"></div>
+    </div>
+
+    <!-- 상벌 (포인트 + 포상/징계 상점) -->
+    <div id="points-view">
+      <div class="list-header">
+        <h2>상벌</h2>
+        <button class="btn" id="master-mode-btn" onclick="togglePointsMaster()">마스터 모드</button>
+      </div>
+
+      <div class="pt-balance">
+        <span class="pt-balance-label">현재 포인트</span>
+        <span class="pt-balance-num" id="pt-balance">0</span>
+      </div>
+
+      <!-- 마스터: 적립/차감 -->
+      <div class="pt-award" id="pt-award" style="display:none">
+        <input type="number" id="pt-delta" placeholder="포인트 (예: 5 / -3)">
+        <input type="text" id="pt-reason" placeholder="사유">
+        <button class="btn" onclick="ptAward(1)">＋ 적립</button>
+        <button class="btn danger" onclick="ptAward(-1)">− 차감</button>
+      </div>
+
+      <section class="pt-sec">
+        <div class="pt-sec-head">
+          <h3>포상 상점</h3>
+          <button class="btn pt-shop-add" data-kind="reward" onclick="shopOpenAdd('reward')" style="display:none">＋ 포상</button>
+        </div>
+        <ul class="pt-shop-list" id="pt-rewards"></ul>
+      </section>
+
+      <section class="pt-sec">
+        <div class="pt-sec-head">
+          <h3>징계 목록</h3>
+          <button class="btn pt-shop-add" data-kind="punishment" onclick="shopOpenAdd('punishment')" style="display:none">＋ 징계</button>
+        </div>
+        <ul class="pt-shop-list" id="pt-punishments"></ul>
+      </section>
+
+      <section class="pt-sec">
+        <h3>기록</h3>
+        <ul class="pt-ledger" id="pt-ledger"></ul>
+      </section>
+    </div>
   </main>
 </div>
 
@@ -1172,18 +1330,18 @@ function toast(msg, error = false) {
   el._t = setTimeout(() => el.className = "", 2200);
 }
 
-const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view","contract-view"];
+const ALL_VIEWS = ["list-view","post-view","editor-view","homework-view","hwadmin-view","contract-view","bucket-view","points-view"];
 function showOnly(viewId, pushHistory = true) {
   ALL_VIEWS.forEach(id => {
     const el = $(id);
     if (el) el.style.display = id === viewId ? "block" : "none";
   });
   // 상단 내비 활성화
-  const navCol = $("nav-column"), navHw = $("nav-homework"), navCt = $("nav-contract");
   const inColumn = ["list-view","post-view","editor-view"].includes(viewId);
-  if (navCol) navCol.classList.toggle("active", inColumn);
-  if (navHw) navHw.classList.toggle("active", viewId === "homework-view");
-  if (navCt) navCt.classList.toggle("active", viewId === "contract-view");
+  const navMap = { "nav-column": inColumn, "nav-homework": viewId === "homework-view",
+    "nav-contract": viewId === "contract-view", "nav-bucket": viewId === "bucket-view",
+    "nav-points": viewId === "points-view" };
+  for (const id in navMap) { const el = $(id); if (el) el.classList.toggle("active", navMap[id]); }
   const newBtn = $("new-post-btn");
   if (newBtn) newBtn.style.display = (viewId === "list-view" || viewId === "post-view") ? "" : "none";
 
@@ -1195,6 +1353,8 @@ function showOnly(viewId, pushHistory = true) {
     else if (viewId === "homework-view") history.pushState(state, "", hwSelDate ? `/?homework=${hwSelDate}` : "/?homework");
     else if (viewId === "hwadmin-view") history.pushState(state, "", "/?hwadmin");
     else if (viewId === "contract-view") history.pushState(state, "", "/?contract");
+    else if (viewId === "bucket-view") history.pushState(state, "", "/?bucket");
+    else if (viewId === "points-view") history.pushState(state, "", "/?points");
   }
 }
 
@@ -1267,6 +1427,12 @@ async function routeFromUrl() {
   } else if (params.has("contract")) {
     await showContract(false);
     history.replaceState({ view: "contract-view" }, "", location.href);
+  } else if (params.has("bucket")) {
+    await showBucket(false);
+    history.replaceState({ view: "bucket-view" }, "", location.href);
+  } else if (params.has("points")) {
+    await showPoints(false);
+    history.replaceState({ view: "points-view" }, "", location.href);
   } else if (postId) {
     currentPostId = parseInt(postId);
     await loadPost(currentPostId, false);
@@ -2467,6 +2633,264 @@ async function contractDelete(id) {
   await renderContracts();
 }
 
+// ── 버킷리스트 ──
+let bkItems = [];
+let bkEditId = null;
+let bkImageUrl = null;
+
+async function showBucket(push = true) {
+  showOnly("bucket-view", push);
+  bucketCancelAdd();
+  await renderBucket();
+}
+
+async function renderBucket() {
+  try { bkItems = (await (await fetch("/api/bucket")).json()).items || []; }
+  catch { toast("불러오기 실패", true); bkItems = []; }
+
+  const groups = { todo: [], doing: [], done: [] };
+  bkItems.forEach(i => (groups[i.status] || groups.todo).push(i));
+  const labels = { todo: "예정", doing: "진행중", done: "완료" };
+  let html = "";
+  for (const st of ["doing", "todo", "done"]) {
+    if (!groups[st].length) continue;
+    html += `<div class="bk-group"><div class="bk-group-title">${labels[st]} <span>${groups[st].length}</span></div>`;
+    html += groups[st].map(bucketCard).join("") + `</div>`;
+  }
+  $("bucket-list").innerHTML = html || `<div class="hw-empty">아직 항목이 없어요. ＋추가로 시작해보세요.</div>`;
+}
+
+function bucketCard(i) {
+  const next = { todo: "doing", doing: "done", done: "todo" };
+  const nextLabel = { todo: "시작", doing: "완료", done: "되돌리기" };
+  return `<div class="bk-card ${i.status}">
+    ${i.image_url ? `<img class="bk-img" src="${i.image_url}" alt="" loading="lazy">` : ""}
+    <div class="bk-body">
+      <div class="bk-card-top">
+        <span class="bk-title">${escHtml(i.title)}</span>
+        ${i.author ? `<span class="bk-author">${escHtml(i.author)}</span>` : ""}
+      </div>
+      ${i.detail ? `<div class="bk-detail">${escHtml(i.detail)}</div>` : ""}
+      ${i.status === "done" && i.done_at ? `<div class="bk-done-at">완료 ${i.done_at}</div>` : ""}
+      <div class="bk-actions">
+        <button class="btn" onclick="bucketStatus(${i.id},'${next[i.status]}')">${nextLabel[i.status]}</button>
+        <button class="btn" onclick="bucketOpenEdit(${i.id})">수정</button>
+        <button class="btn danger" onclick="bucketDelete(${i.id})">삭제</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bucketOpenAdd() {
+  bkEditId = null; bkImageUrl = null;
+  $("bk-title").value = ""; $("bk-detail").value = ""; $("bk-author").value = "";
+  $("bk-file").value = ""; $("bk-upload-status").textContent = "";
+  $("bucket-add").style.display = "block"; $("bk-title").focus();
+}
+function bucketOpenEdit(id) {
+  const i = bkItems.find(x => x.id === id); if (!i) return;
+  bkEditId = id; bkImageUrl = i.image_url || null;
+  $("bk-title").value = i.title; $("bk-detail").value = i.detail || "";
+  $("bk-author").value = i.author || ""; $("bk-file").value = "";
+  $("bk-upload-status").textContent = i.image_url ? "기존 이미지 유지 (새로 올리면 교체)" : "";
+  $("bucket-add").style.display = "block"; $("bk-title").focus();
+}
+function bucketCancelAdd() { $("bucket-add").style.display = "none"; bkEditId = null; bkImageUrl = null; }
+
+async function bucketSave() {
+  const title = $("bk-title").value.trim();
+  if (!title) { toast("제목을 입력하세요", true); return; }
+  const file = $("bk-file").files[0];
+  if (file) {
+    $("bk-upload-status").textContent = "업로드 중...";
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const up = await fetch("/api/media", { method: "POST", body: fd });
+      bkImageUrl = (await up.json()).url;
+    } catch { toast("이미지 업로드 실패", true); return; }
+    $("bk-upload-status").textContent = "";
+  }
+  const payload = { title, detail: $("bk-detail").value.trim(), author: $("bk-author").value, image_url: bkImageUrl };
+  const action = bkEditId ? "update" : "add";
+  if (bkEditId) payload.id = bkEditId;
+  const res = await fetch(`/api/bucket?action=${action}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+  });
+  if (!res.ok) { toast("저장 실패", true); return; }
+  bucketCancelAdd();
+  await renderBucket();
+}
+
+async function bucketStatus(id, status) {
+  const res = await fetch("/api/bucket?action=status", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status })
+  });
+  if (!res.ok) { toast("실패", true); return; }
+  await renderBucket();
+}
+async function bucketDelete(id) {
+  if (!confirm("이 항목을 삭제할까요?")) return;
+  const res = await fetch("/api/bucket?action=delete", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id })
+  });
+  if (!res.ok) { toast("삭제 실패", true); return; }
+  await renderBucket();
+}
+
+// ── 상벌 포인트 + 상점 ──
+let pointsMaster = false;
+let pointsShop = [];
+
+async function ensureMasterAuth() {
+  if (hwAdminToken) return true;
+  const pw = prompt("마스터 비밀번호");
+  if (pw === null || pw === "") return false;
+  const res = await fetch("/api/homework?action=admin-auth", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw })
+  });
+  if (!res.ok) { toast("비밀번호가 틀렸습니다", true); return false; }
+  hwAdminToken = (await res.json()).token;
+  sessionStorage.setItem("hwAdminToken", hwAdminToken);
+  return true;
+}
+function masterHeaders() {
+  return { "Content-Type": "application/json", ...(hwAdminToken ? { "X-HW-Admin": hwAdminToken } : {}) };
+}
+
+async function showPoints(push = true) {
+  showOnly("points-view", push);
+  pointsMaster = !!hwAdminToken;
+  await renderPoints();
+}
+
+async function togglePointsMaster() {
+  if (pointsMaster) { pointsMaster = false; renderPoints(); return; }
+  if (await ensureMasterAuth()) { pointsMaster = true; renderPoints(); }
+}
+
+function ptTypeLabel(t) { return ({ merit: "적립", demerit: "차감", reward: "포상 교환", adjust: "조정" })[t] || t; }
+
+async function renderPoints() {
+  let data;
+  try { data = await (await fetch("/api/points")).json(); }
+  catch { toast("불러오기 실패", true); return; }
+
+  $("pt-balance").textContent = data.balance;
+  $("master-mode-btn").textContent = pointsMaster ? "마스터 모드 ✓" : "마스터 모드";
+  $("master-mode-btn").classList.toggle("active", pointsMaster);
+  $("pt-award").style.display = pointsMaster ? "flex" : "none";
+  document.querySelectorAll(".pt-shop-add").forEach(b => b.style.display = pointsMaster ? "" : "none");
+
+  $("pt-rewards").innerHTML = (data.rewards || []).map(r => `
+    <li class="pt-shop-item">
+      <div class="pt-shop-info">
+        <span class="pt-shop-name">${escHtml(r.name)}</span>
+        ${r.detail ? `<span class="pt-shop-detail">${escHtml(r.detail)}</span>` : ""}
+      </div>
+      <span class="pt-cost reward">${r.cost}P</span>
+      <div class="pt-shop-btns">
+        <button class="btn" ${data.balance < r.cost ? "disabled" : ""} onclick="ptRedeem(${r.id})">교환</button>
+        ${pointsMaster ? `<button class="btn" onclick="shopEdit(${r.id})">수정</button><button class="btn danger" onclick="shopDelete(${r.id})">삭제</button>` : ""}
+      </div>
+    </li>`).join("") || `<li class="hw-empty">등록된 포상이 없어요.</li>`;
+
+  $("pt-punishments").innerHTML = (data.punishments || []).map(p => `
+    <li class="pt-shop-item">
+      <div class="pt-shop-info">
+        <span class="pt-shop-name">${escHtml(p.name)}</span>
+        ${p.detail ? `<span class="pt-shop-detail">${escHtml(p.detail)}</span>` : ""}
+      </div>
+      <span class="pt-cost punish">-${p.cost}P</span>
+      <div class="pt-shop-btns">
+        ${pointsMaster ? `<button class="btn danger" onclick="ptImpose(${p.id})">부과</button><button class="btn" onclick="shopEdit(${p.id})">수정</button><button class="btn danger" onclick="shopDelete(${p.id})">삭제</button>` : `<span class="pt-readonly">마스터가 부과</span>`}
+      </div>
+    </li>`).join("") || `<li class="hw-empty">등록된 징계가 없어요.</li>`;
+
+  $("pt-ledger").innerHTML = (data.ledger || []).map(l => `
+    <li class="pt-ledger-item">
+      <span class="pt-ledger-delta ${l.delta >= 0 ? "plus" : "minus"}">${l.delta >= 0 ? "+" : ""}${l.delta}</span>
+      <span class="pt-ledger-reason">${escHtml(l.reason || ptTypeLabel(l.type))}</span>
+      <span class="pt-ledger-date">${(l.created_at || "").slice(5, 16)}</span>
+      ${pointsMaster ? `<button class="btn pt-ledger-del" onclick="ptLedgerDelete(${l.id})">×</button>` : ""}
+    </li>`).join("") || `<li class="hw-empty">기록 없음</li>`;
+
+  pointsShop = [...(data.rewards || []), ...(data.punishments || [])];
+}
+
+async function ptHandle(res) {
+  if (res.status === 403) {
+    hwAdminToken = null; sessionStorage.removeItem("hwAdminToken"); pointsMaster = false;
+    toast("마스터 인증이 필요해요", true); renderPoints(); return false;
+  }
+  if (!res.ok) { toast("실패", true); return false; }
+  return true;
+}
+
+async function ptAward(sign) {
+  let v = parseInt($("pt-delta").value, 10);
+  if (!v) { toast("포인트를 입력하세요", true); return; }
+  v = Math.abs(v) * sign;
+  const res = await fetch("/api/points?action=award", {
+    method: "POST", headers: masterHeaders(),
+    body: JSON.stringify({ delta: v, reason: $("pt-reason").value.trim() })
+  });
+  if (await ptHandle(res)) { $("pt-delta").value = ""; $("pt-reason").value = ""; renderPoints(); }
+}
+async function ptRedeem(id) {
+  if (!confirm("이 포상을 교환할까요? 포인트가 차감됩니다.")) return;
+  const res = await fetch("/api/points?action=redeem", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item_id: id })
+  });
+  if (res.status === 400) { toast("포인트가 부족해요", true); return; }
+  if (await ptHandle(res)) renderPoints();
+}
+async function ptImpose(id) {
+  if (!confirm("이 징계를 부과할까요?")) return;
+  const res = await fetch("/api/points?action=impose", {
+    method: "POST", headers: masterHeaders(), body: JSON.stringify({ item_id: id })
+  });
+  if (await ptHandle(res)) renderPoints();
+}
+async function ptLedgerDelete(id) {
+  if (!confirm("이 기록을 삭제할까요?")) return;
+  const res = await fetch("/api/points?action=ledger-delete", {
+    method: "POST", headers: masterHeaders(), body: JSON.stringify({ id })
+  });
+  if (await ptHandle(res)) renderPoints();
+}
+
+async function shopOpenAdd(kind) {
+  const name = prompt(kind === "reward" ? "포상 이름" : "징계 이름");
+  if (!name || !name.trim()) return;
+  const costStr = prompt(kind === "reward" ? "교환 비용 (포인트)" : "차감 포인트", "0");
+  if (costStr === null) return;
+  const detail = prompt("설명 (선택, 비워도 됨)", "");
+  if (detail === null) return;
+  const res = await fetch("/api/points?action=shop-add", {
+    method: "POST", headers: masterHeaders(),
+    body: JSON.stringify({ kind, name: name.trim(), cost: parseInt(costStr, 10) || 0, detail: detail.trim() })
+  });
+  if (await ptHandle(res)) renderPoints();
+}
+async function shopEdit(id) {
+  const it = pointsShop.find(s => s.id === id); if (!it) return;
+  const name = prompt("이름", it.name); if (name === null || !name.trim()) return;
+  const costStr = prompt(it.kind === "reward" ? "교환 비용" : "차감 포인트", it.cost); if (costStr === null) return;
+  const detail = prompt("설명 (선택)", it.detail || ""); if (detail === null) return;
+  const res = await fetch("/api/points?action=shop-update", {
+    method: "POST", headers: masterHeaders(),
+    body: JSON.stringify({ id, name: name.trim(), cost: parseInt(costStr, 10) || 0, detail: detail.trim() })
+  });
+  if (await ptHandle(res)) renderPoints();
+}
+async function shopDelete(id) {
+  if (!confirm("이 항목을 삭제할까요?")) return;
+  const res = await fetch("/api/points?action=shop-delete", {
+    method: "POST", headers: masterHeaders(), body: JSON.stringify({ id })
+  });
+  if (await ptHandle(res)) renderPoints();
+}
+
 // 관리자 입력 Enter 단축키
 $("hw-tpl-input")?.addEventListener("keydown", e => { if (e.key === "Enter") hwTplAdd(); });
 $("hw-item-input")?.addEventListener("keydown", e => { if (e.key === "Enter") hwItemAdd(); });
@@ -2485,6 +2909,10 @@ window.addEventListener("popstate", (e) => {
     showHwAdmin(false);
   } else if (state.view === "contract-view") {
     showContract(false);
+  } else if (state.view === "bucket-view") {
+    showBucket(false);
+  } else if (state.view === "points-view") {
+    showPoints(false);
   } else if (state.view === "list-view") {
     showOnly("list-view", false);
     loadList(state.page || 1);
