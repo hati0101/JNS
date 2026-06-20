@@ -33,3 +33,15 @@ CREATE TABLE IF NOT EXISTS shop_items (
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
+
+-- 포상 교환 신청 (슬레이브 신청 → 마스터 승인 시 차감)
+CREATE TABLE IF NOT EXISTS reward_requests (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_id      INTEGER,                              -- shop_items.id
+  name         TEXT NOT NULL,                        -- 신청 시점 포상명 스냅샷
+  cost         INTEGER NOT NULL,                     -- 신청 시점 비용 스냅샷
+  status       TEXT NOT NULL DEFAULT 'pending',      -- 'pending' | 'approved' | 'rejected'
+  requested_at TEXT NOT NULL,
+  decided_at   TEXT,
+  ledger_id    INTEGER
+);

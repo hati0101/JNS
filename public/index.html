@@ -1016,6 +1016,16 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 .pt-ledger-reason { flex: 1; min-width: 0; }
 .pt-ledger-date { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .pt-ledger-del { padding: 2px 8px; font-size: 13px; }
+.pt-sec-sub { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+.pt-req-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.pt-req-item {
+  display: flex; align-items: center; gap: 12px; padding: 13px 16px;
+  border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-dim);
+}
+.pt-req-name { flex: 1; min-width: 0; font-size: 15px; }
+.pt-req-status { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.pt-req-btns { display: flex; gap: 6px; flex: none; }
+.pt-req-btns .btn { padding: 5px 10px; font-size: 13px; }
 
 @media (max-width: 600px) {
   .topnav { margin-left: 8px; }
@@ -1243,6 +1253,12 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
         <button class="btn" onclick="ptAward(1)">＋ 적립</button>
         <button class="btn danger" onclick="ptAward(-1)">− 차감</button>
       </div>
+
+      <!-- 교환 신청 (대기중) -->
+      <section class="pt-sec" id="pt-req-sec" style="display:none">
+        <h3>교환 신청 <span class="pt-sec-sub" id="pt-req-count"></span></h3>
+        <ul class="pt-req-list" id="pt-requests"></ul>
+      </section>
 
       <section class="pt-sec">
         <div class="pt-sec-head">
@@ -2781,7 +2797,34 @@ async function renderPoints() {
   $("pt-award").style.display = pointsMaster ? "flex" : "none";
   document.querySelectorAll(".pt-shop-add").forEach(b => b.style.display = pointsMaster ? "" : "none");
 
-  $("pt-rewards").innerHTML = (data.rewards || []).map(r => `
+  // 교환 신청 (대기중)
+  const reqs = data.requests || [];
+  const pendingIds = new Set(reqs.map(r => r.item_id));
+  if (reqs.length) {
+    $("pt-req-sec").style.display = "";
+    $("pt-req-count").textContent = pointsMaster ? `· ${reqs.length}건 승인 대기` : `· ${reqs.length}건`;
+    $("pt-requests").innerHTML = reqs.map(r => `
+      <li class="pt-req-item">
+        <span class="pt-req-name">${escHtml(r.name)}</span>
+        <span class="pt-cost reward">${r.cost}P</span>
+        <span class="pt-req-status">대기중</span>
+        <div class="pt-req-btns">
+          ${pointsMaster
+            ? `<button class="btn" onclick="ptApprove(${r.id})">승인</button><button class="btn danger" onclick="ptReject(${r.id})">거절</button>`
+            : `<button class="btn" onclick="ptCancelReq(${r.id})">취소</button>`}
+        </div>
+      </li>`).join("");
+  } else {
+    $("pt-req-sec").style.display = "none";
+    $("pt-requests").innerHTML = "";
+  }
+
+  $("pt-rewards").innerHTML = (data.rewards || []).map(r => {
+    const pending = pendingIds.has(r.id);
+    const btn = pending
+      ? `<button class="btn" disabled>신청됨</button>`
+      : `<button class="btn" ${data.balance < r.cost ? "disabled" : ""} onclick="ptRedeem(${r.id})">신청</button>`;
+    return `
     <li class="pt-shop-item">
       <div class="pt-shop-info">
         <span class="pt-shop-name">${escHtml(r.name)}</span>
@@ -2789,10 +2832,11 @@ async function renderPoints() {
       </div>
       <span class="pt-cost reward">${r.cost}P</span>
       <div class="pt-shop-btns">
-        <button class="btn" ${data.balance < r.cost ? "disabled" : ""} onclick="ptRedeem(${r.id})">교환</button>
+        ${btn}
         ${pointsMaster ? `<button class="btn" onclick="shopEdit(${r.id})">수정</button><button class="btn danger" onclick="shopDelete(${r.id})">삭제</button>` : ""}
       </div>
-    </li>`).join("") || `<li class="hw-empty">등록된 포상이 없어요.</li>`;
+    </li>`;
+  }).join("") || `<li class="hw-empty">등록된 포상이 없어요.</li>`;
 
   $("pt-punishments").innerHTML = (data.punishments || []).map(p => `
     <li class="pt-shop-item">
@@ -2837,12 +2881,35 @@ async function ptAward(sign) {
   if (await ptHandle(res)) { $("pt-delta").value = ""; $("pt-reason").value = ""; renderPoints(); }
 }
 async function ptRedeem(id) {
-  if (!confirm("이 포상을 교환할까요? 포인트가 차감됩니다.")) return;
+  if (!confirm("이 포상을 교환 신청할까요? 마스터 승인 후 차감돼요.")) return;
   const res = await fetch("/api/points?action=redeem", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item_id: id })
   });
   if (res.status === 400) { toast("포인트가 부족해요", true); return; }
-  if (await ptHandle(res)) renderPoints();
+  if (res.status === 409) { toast("이미 신청한 포상이에요", true); return; }
+  if (await ptHandle(res)) { toast("신청 완료 — 마스터 승인 대기중"); renderPoints(); }
+}
+async function ptApprove(id) {
+  const res = await fetch("/api/points?action=request-approve", {
+    method: "POST", headers: masterHeaders(), body: JSON.stringify({ id })
+  });
+  if (res.status === 400) { toast("포인트가 부족해 승인할 수 없어요", true); return; }
+  if (await ptHandle(res)) { toast("승인 완료 — 포인트 차감됨"); renderPoints(); }
+}
+async function ptReject(id) {
+  if (!confirm("이 신청을 거절할까요?")) return;
+  const res = await fetch("/api/points?action=request-reject", {
+    method: "POST", headers: masterHeaders(), body: JSON.stringify({ id })
+  });
+  if (await ptHandle(res)) { toast("거절됨"); renderPoints(); }
+}
+async function ptCancelReq(id) {
+  if (!confirm("교환 신청을 취소할까요?")) return;
+  const res = await fetch("/api/points?action=request-cancel", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id })
+  });
+  if (!res.ok) { toast("취소 실패", true); return; }
+  toast("신청 취소됨"); renderPoints();
 }
 async function ptImpose(id) {
   if (!confirm("이 징계를 부과할까요?")) return;

@@ -44,9 +44,13 @@ export async function onRequestGet({ env }) {
   const { results: shop } = await env.DB.prepare(
     "SELECT id, kind, name, detail, cost, sort_order FROM shop_items ORDER BY sort_order ASC, id ASC"
   ).all();
+  const { results: requests } = await env.DB.prepare(
+    "SELECT id, item_id, name, cost, status, requested_at FROM reward_requests WHERE status = 'pending' ORDER BY id ASC"
+  ).all();
   return json({
     balance,
     ledger,
+    requests,
     rewards: shop.filter(s => s.kind === "reward"),
     punishments: shop.filter(s => s.kind === "punishment"),
   });
@@ -56,17 +60,28 @@ export async function onRequestPost({ request, env }) {
   const action = new URL(request.url).searchParams.get("action");
   const b = await request.json().catch(() => ({}));
 
-  // ── 포상 교환 (로그인된 사용자 = 슬레이브 가능) ──
+  // ── 포상 교환 신청 (로그인된 사용자 = 슬레이브) : 차감은 승인 시점에 ──
   if (action === "redeem") {
     if (!b.item_id) return json({ error: "item_id required" }, 400);
     const item = await env.DB.prepare("SELECT name, cost, kind FROM shop_items WHERE id = ?").bind(b.item_id).first();
     if (!item || item.kind !== "reward") return json({ error: "reward not found" }, 404);
     const bal = await getBalance(env);
     if (bal < item.cost) return json({ error: "insufficient", balance: bal }, 400);
+    const dup = await env.DB.prepare(
+      "SELECT id FROM reward_requests WHERE item_id = ? AND status = 'pending'"
+    ).bind(b.item_id).first();
+    if (dup) return json({ error: "already pending" }, 409);
     await env.DB.prepare(
-      "INSERT INTO point_ledger (delta, reason, type, created_at) VALUES (?, ?, 'reward', ?)"
-    ).bind(-item.cost, `포상 교환: ${item.name}`, nowKST()).run();
-    return json({ ok: true, balance: await getBalance(env) });
+      "INSERT INTO reward_requests (item_id, name, cost, status, requested_at) VALUES (?, ?, ?, 'pending', ?)"
+    ).bind(b.item_id, item.name, item.cost, nowKST()).run();
+    return json({ ok: true });
+  }
+
+  // ── 신청 취소 (로그인된 사용자 = 본인 대기건) ──
+  if (action === "request-cancel") {
+    if (!b.id) return json({ error: "id required" }, 400);
+    await env.DB.prepare("DELETE FROM reward_requests WHERE id = ? AND status = 'pending'").bind(b.id).run();
+    return json({ ok: true });
   }
 
   // ── 이하 마스터 전용 ──
@@ -81,6 +96,34 @@ export async function onRequestPost({ request, env }) {
       "INSERT INTO point_ledger (delta, reason, type, created_at) VALUES (?, ?, ?, ?)"
     ).bind(delta, b.reason || null, type, nowKST()).run();
     return json({ ok: true, balance: await getBalance(env) });
+  }
+
+  // 포상 신청 승인 (이때 포인트 차감)
+  if (action === "request-approve") {
+    if (!b.id) return json({ error: "id required" }, 400);
+    const req = await env.DB.prepare(
+      "SELECT id, name, cost, status FROM reward_requests WHERE id = ?"
+    ).bind(b.id).first();
+    if (!req || req.status !== "pending") return json({ error: "not pending" }, 404);
+    const bal = await getBalance(env);
+    if (bal < req.cost) return json({ error: "insufficient", balance: bal }, 400);
+    const led = await env.DB.prepare(
+      "INSERT INTO point_ledger (delta, reason, type, created_at) VALUES (?, ?, 'reward', ?)"
+    ).bind(-req.cost, `포상 교환: ${req.name}`, nowKST()).run();
+    const ledgerId = led.meta?.last_row_id ?? null;
+    await env.DB.prepare(
+      "UPDATE reward_requests SET status = 'approved', decided_at = ?, ledger_id = ? WHERE id = ?"
+    ).bind(nowKST(), ledgerId, b.id).run();
+    return json({ ok: true, balance: await getBalance(env) });
+  }
+
+  // 포상 신청 거절
+  if (action === "request-reject") {
+    if (!b.id) return json({ error: "id required" }, 400);
+    await env.DB.prepare(
+      "UPDATE reward_requests SET status = 'rejected', decided_at = ? WHERE id = ? AND status = 'pending'"
+    ).bind(nowKST(), b.id).run();
+    return json({ ok: true });
   }
 
   // 징계 부과 (상점의 징계 항목 → 포인트 차감 + 기록)
