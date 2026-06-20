@@ -31,6 +31,7 @@
   --danger: #ff5f5f;
   --mono: 'JetBrains Mono', monospace;
   --serif: 'Noto Serif KR', serif;
+  --container: 800px;
 }
 
 body {
@@ -95,16 +96,19 @@ body {
 #app { display: none; min-height: 100vh; }
 
 header {
-  border-bottom: 1px solid var(--border);
-  padding: 0 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
   position: sticky;
   top: 0;
   background: var(--bg);
   z-index: 100;
+}
+.header-inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 40px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
 }
 .site-title {
   font-size: .8rem;
@@ -133,7 +137,7 @@ header {
 .btn.primary:hover { opacity: .85; }
 .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 
-main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
+main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
 
 /* ── 글 목록 ── */
 #list-view {}
@@ -404,13 +408,13 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 
 /* ── 반응형 ── */
 @media (max-width: 600px) {
-  header { padding: 0 16px; gap: 8px; }
+  .header-inner { padding: 0 20px; }
   .dday-badge { padding: 5px 8px; font-size: 12px; }
   main { padding: 40px 20px; }
   .post-item { flex-direction: column; gap: 4px; }
   .post-date { font-size: .68rem; }
   .pt-cards { grid-template-columns: 1fr; }
-  .menu-drawer { min-width: 60vw; }
+  .menu-drawer { min-width: 56vw; right: 12px; }
 }
 
 
@@ -826,13 +830,15 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 }
 .menu-overlay.open { opacity: 1; pointer-events: auto; }
 .menu-drawer {
-  position: fixed; top: 56px; right: 0; z-index: 201; min-width: 210px;
+  position: fixed; top: 56px; z-index: 201; min-width: 210px;
+  right: max(0px, calc((100vw - var(--container)) / 2 + 40px));
   background: var(--bg); border: 1px solid var(--border); border-top: none;
-  border-radius: 0 0 0 14px; display: flex; flex-direction: column; padding: 8px;
-  transform: translateX(110%); transition: transform .22s ease;
+  border-radius: 0 0 14px 14px; display: flex; flex-direction: column; padding: 8px;
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
   box-shadow: -10px 12px 36px rgba(0,0,0,.45);
 }
-.menu-drawer.open { transform: translateX(0); }
+.menu-drawer.open { opacity: 1; visibility: visible; transform: translateY(0); }
 .menu-item {
   background: none; border: none; color: var(--text); text-align: left;
   font-family: var(--mono); font-size: 15px; padding: 12px 14px; border-radius: 8px;
@@ -1086,10 +1092,12 @@ main { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
 <!-- 앱 -->
 <div id="app">
   <header>
-    <span class="site-title" onclick="showList()">아키텍트</span>
-    <span class="header-spacer"></span>
-    <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day"></button>
-    <button class="menu-btn" id="menu-btn" onclick="toggleMenu()" aria-label="메뉴">☰</button>
+    <div class="header-inner">
+      <span class="site-title" onclick="showList()">아키텍트</span>
+      <span class="header-spacer"></span>
+      <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day"></button>
+      <button class="menu-btn" id="menu-btn" onclick="toggleMenu()" aria-label="메뉴">☰</button>
+    </div>
   </header>
   <div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
   <nav class="menu-drawer" id="menu-drawer">
