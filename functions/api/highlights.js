@@ -10,6 +10,9 @@ function json(data, status = 200) {
     headers: { "Content-Type": "application/json" },
   });
 }
+function nowKST() {
+  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().replace("T", " ").slice(0, 19);
+}
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
@@ -33,8 +36,8 @@ export async function onRequestPost({ request, env }) {
   if (!post_id || !text) return json({ error: "post_id and text required" }, 400);
 
   const result = await env.DB.prepare(
-    "INSERT INTO highlights (post_id, text, color, memo) VALUES (?, ?, ?, ?) RETURNING id"
-  ).bind(post_id, text, color || "#ffeb3b", memo || "").first();
+    "INSERT INTO highlights (post_id, text, color, memo, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id"
+  ).bind(post_id, text, color || "#ffeb3b", memo || "", nowKST()).first();
 
   return json({ ok: true, id: result.id }, 201);
 }

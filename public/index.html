@@ -1097,6 +1097,19 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
   background: var(--danger); color: #fff; font-family: var(--mono); font-size: 10px;
   font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: .05em;
 }
+/* 글 내부 NEW 표시 */
+.hl-new-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: super; margin-left: 2px; width: 13px; height: 13px;
+  background: var(--danger); color: #fff; border-radius: 50%; font-size: 8px;
+  font-family: var(--mono); font-weight: 700;
+}
+.cmt-new {
+  display: inline-block; margin-right: 6px; background: var(--danger); color: #fff;
+  font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 1px 4px;
+  border-radius: 3px; vertical-align: middle;
+}
+.mc-count.mc-has-new { background: var(--danger) !important; color: #fff !important; }
 
 /* ── 데일리 체크인 ── */
 #checkin-view { display: none; }
@@ -1178,7 +1191,7 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
 <div id="app">
   <header>
     <div class="header-inner">
-      <span class="site-title" onclick="showList()">아키텍트</span>
+      <span class="site-title" onclick="showCheckin()">아키텍트</span>
       <span class="header-spacer"></span>
       <button class="dday-badge" id="dday-badge" onclick="ddayEdit()" title="D-day"></button>
       <button class="menu-btn" id="menu-btn" onclick="toggleMenu()" aria-label="메뉴">☰<span class="menu-badge" id="menu-badge" style="display:none"></span></button>
@@ -1186,12 +1199,12 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
   </header>
   <div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
   <nav class="menu-drawer" id="menu-drawer">
-    <button class="menu-item active" id="nav-column" onclick="menuNav('list')">칼럼<span class="nav-badge" id="nav-column-badge" style="display:none"></span></button>
-    <button class="menu-item" id="nav-homework" onclick="menuNav('homework')">숙제</button>
-    <button class="menu-item" id="nav-contract" onclick="menuNav('contract')">계약서</button>
-    <button class="menu-item" id="nav-bucket" onclick="menuNav('bucket')">버킷</button>
-    <button class="menu-item" id="nav-points" onclick="menuNav('points')">상벌<span class="nav-badge" id="points-badge" style="display:none"></span></button>
     <button class="menu-item" id="nav-checkin" onclick="menuNav('checkin')">체크인</button>
+    <button class="menu-item" id="nav-homework" onclick="menuNav('homework')">숙제</button>
+    <button class="menu-item" id="nav-points" onclick="menuNav('points')">상벌<span class="nav-badge" id="points-badge" style="display:none"></span></button>
+    <button class="menu-item active" id="nav-column" onclick="menuNav('list')">칼럼<span class="nav-badge" id="nav-column-badge" style="display:none"></span></button>
+    <button class="menu-item" id="nav-bucket" onclick="menuNav('bucket')">버킷</button>
+    <button class="menu-item" id="nav-contract" onclick="menuNav('contract')">계약서</button>
     <div class="menu-sep"></div>
     <button class="menu-item menu-logout" onclick="logout()">로그아웃</button>
   </nav>
@@ -1202,6 +1215,7 @@ main { max-width: var(--container); margin: 0 auto; padding: 60px 40px; }
       <div class="list-header">
         <h2>칼럼</h2>
         <div class="list-header-right">
+          <button class="btn" onclick="markAllColumnsSeen()">모두 읽음</button>
           <button class="btn primary" onclick="showEditor()">새 글</button>
           <span class="post-count" id="post-count"></span>
         </div>
@@ -1635,9 +1649,12 @@ async function routeFromUrl() {
     currentPostId = parseInt(postId);
     await loadPost(currentPostId, false);
     history.replaceState({ view: "post-view", postId: currentPostId, page }, "", location.href);
-  } else {
+  } else if (params.has("page") || params.has("write")) {
     await loadList(page);
     history.replaceState({ view: "list-view", postId: currentPostId, page }, "", location.href);
+  } else {
+    await showCheckin(false);
+    history.replaceState({ view: "checkin-view" }, "", location.href);
   }
 }
 
@@ -1688,6 +1705,7 @@ function showList() {
 // ── 상세 ──
 async function loadPost(id, pushHistory = true) {
   currentPostId = id;
+  currentPostPrevSeen = postSeenAt(id);   // NEW 판정 기준 (직전 본 시각)
   const res = await fetch(`/api/posts?id=${id}`);
   const post = await res.json();
 
@@ -1709,6 +1727,7 @@ async function loadPost(id, pushHistory = true) {
   // 본 것으로 표시 (NEW 해제)
   if (activityMap[id] === undefined) await fetchActivity();
   setSeen(id, activityMap[id] || post.updated_at || "");
+  setSeenAt(id, Date.now());
   updateAllBadges();
 }
 
@@ -1724,7 +1743,11 @@ async function mcLoadAllBadges() {
     const { comments } = await res.json();
     if (comments.length > 0) {
       const badge = wrap.querySelector(".mc-count");
-      if (badge) { badge.textContent = comments.length; badge.style.display = "inline"; }
+      if (badge) {
+        badge.textContent = comments.length;
+        badge.style.display = "inline";
+        badge.classList.toggle("mc-has-new", comments.some(c => isItemNew(c.created_at)));
+      }
     }
   }
 }
@@ -2002,11 +2025,11 @@ function applyHighlights() {
 
   // 각 하이라이트 텍스트 찾아서 mark로 감싸기
   hlState.highlights.forEach(hl => {
-    wrapTextInBody(body, hl.text, hl.id, hl.color, hl.memo || "", hl.comment_count || 0);
+    wrapTextInBody(body, hl.text, hl.id, hl.color, hl.memo || "", hl.comment_count || 0, isItemNew(hl.created_at));
   });
 }
 
-function wrapTextInBody(root, searchText, hlId, color, memo, commentCount) {
+function wrapTextInBody(root, searchText, hlId, color, memo, commentCount, isNew) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       // 미디어 댓글 영역 안의 텍스트는 형광펜 대상에서 제외
@@ -2038,6 +2061,14 @@ function wrapTextInBody(root, searchText, hlId, color, memo, commentCount) {
       badge.className = "hl-badge";
       badge.textContent = commentCount;
       mark.appendChild(badge);
+    }
+    // 새로 작성된 형광펜이면 NEW 점
+    if (isNew) {
+      mark.classList.add("hl-new");
+      const dot = document.createElement("span");
+      dot.className = "hl-new-dot";
+      dot.textContent = "N";
+      mark.appendChild(dot);
     }
 
     mark.onclick = (e) => { e.stopPropagation(); hlClickExisting(hlId); };
@@ -2316,6 +2347,7 @@ async function hlLoadComments() {
   }
   ul.innerHTML = comments.map(c => `
     <li class="hl-comment-item">
+      ${isItemNew(c.created_at) ? '<span class="cmt-new">NEW</span>' : ''}
       <span class="hl-comment-text">${escHtml(c.content)}</span>
       <span class="hl-comment-date">${fmtDate(c.created_at)}</span>
       <button class="hl-comment-del" onclick="hlCommentDelete(${c.id})" title="삭제">×</button>
@@ -2418,6 +2450,7 @@ async function mcLoad(btn, encodedUrl, ul) {
 
   ul.innerHTML = comments.map(c => `
     <li class="mc-item">
+      ${isItemNew(c.created_at) ? '<span class="cmt-new">NEW</span>' : ''}
       <span class="mc-text">${escHtml(c.content)}</span>
       <span class="mc-date">${fmtDate(c.created_at)}</span>
       <button class="mc-del" onclick="mcDelete(this, ${c.id}, '${encodedUrl}')">×</button>
@@ -2780,6 +2813,16 @@ function setSeen(id, val) {
   const s = getSeen(); s[id] = val;
   try { localStorage.setItem("jns_seen", JSON.stringify(s)); } catch {}
 }
+// 글별 "마지막으로 본 시각" (epoch) — 글 내부 항목 NEW 판정용
+function getSeenAt() { try { return JSON.parse(localStorage.getItem("jns_seen_at") || "{}"); } catch { return {}; } }
+function setSeenAt(id, ms) {
+  const s = getSeenAt(); s[id] = ms;
+  try { localStorage.setItem("jns_seen_at", JSON.stringify(s)); } catch {}
+}
+function postSeenAt(id) { return getSeenAt()[id] || 0; }
+function kstEpoch(s) { return s ? new Date(s.replace(" ", "T") + "+09:00").getTime() : 0; }
+let currentPostPrevSeen = 0;   // 현재 글 진입 시점의 직전 본 시각
+function isItemNew(createdAt) { return kstEpoch(createdAt) > currentPostPrevSeen; }
 function isPostNew(id) {
   const seen = getSeen();
   return (activityMap[id] || "") !== (seen[id] || "");
@@ -2800,6 +2843,19 @@ async function refreshNotifications() {
   catch { pendingReqCount = 0; }
   await fetchActivity();
   updateAllBadges();
+}
+
+// 칼럼 전체 읽음 처리
+async function markAllColumnsSeen() {
+  if (!Object.keys(activityMap).length) await fetchActivity();
+  const seen = getSeen(), seenAt = getSeenAt(), now = Date.now();
+  for (const id in activityMap) { seen[id] = activityMap[id]; seenAt[id] = now; }
+  try {
+    localStorage.setItem("jns_seen", JSON.stringify(seen));
+    localStorage.setItem("jns_seen_at", JSON.stringify(seenAt));
+  } catch {}
+  toast("모두 읽음 처리했어요");
+  await loadList(currentPage);
 }
 
 // ── 데일리 체크인 ──
@@ -3368,7 +3424,7 @@ $("hw-admin-pw")?.addEventListener("keydown", e => { if (e.key === "Enter") hwAd
 // ── 뒤로가기 처리 ──
 window.addEventListener("popstate", (e) => {
   const state = e.state;
-  if (!state) { showOnly("list-view", false); loadList(1); return; }
+  if (!state) { showCheckin(false); return; }
 
   if (state.view === "homework-view") {
     if (state.hwMonth) hwMonth = state.hwMonth;
