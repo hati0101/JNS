@@ -2583,17 +2583,17 @@ async function hwLoadDay(ds) {
 function hwRenderSettle(ds, data) {
   const el = $("hw-settle");
   if (data.settled) {
-    const d = data.settled.delta;
+    const full = data.settled.rate === 100;
     el.innerHTML = `
       <div class="hw-settle-done">
-        <span class="hw-settle-info">🔒 집행 완료 · ${data.settled.rate}% → <b class="${d > 0 ? 'plus' : 'minus'}">${d > 0 ? '+1' : '−1'}</b> 적립</span>
+        <span class="hw-settle-info">🔒 집행 완료 · ${data.settled.rate}% → <b class="${full ? 'plus' : 'minus'}">${full ? '적립 +1' : '벌점 +1'}</b></span>
         <button class="btn" onclick="hwUnsettle('${ds}')">집행 취소</button>
       </div>`;
   } else if (data.total > 0) {
     const rate = Math.round(data.done / data.total * 100);
     el.innerHTML = `
       <div class="hw-settle-pending">
-        <span class="hw-settle-hint">현재 ${rate}% — 집행하면 ${rate === 100 ? '+1' : '−1'} 적립되고 이 날은 동결돼요.</span>
+        <span class="hw-settle-hint">현재 ${rate}% — 집행하면 ${rate === 100 ? '적립 +1' : '벌점 +1'} 부여되고 이 날은 동결돼요.</span>
         <button class="btn primary" onclick="hwSettle('${ds}')">마스터 집행</button>
       </div>`;
   } else {
@@ -2612,7 +2612,7 @@ async function hwSettle(ds) {
   if (res.status === 403) { hwAdminToken = null; sessionStorage.removeItem("hwAdminToken"); toast("마스터 인증이 필요해요", true); return; }
   if (!res.ok) { toast("집행 실패", true); return; }
   const r = await res.json();
-  toast(`집행 완료 · ${r.rate}% → ${r.delta > 0 ? '+1' : '−1'}`);
+  toast(`집행 완료 · ${r.rate}% → ${r.track === 'reward' ? '적립 +1' : '벌점 +1'}`);
   await hwLoadDay(ds);
   await hwRenderCalendar();
   refreshNotifications();

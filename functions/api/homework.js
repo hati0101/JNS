@@ -193,21 +193,24 @@ export async function onRequestPost({ request, env }) {
     const t = await tasksForDate(env, date);
     if (t.total === 0) return json({ error: "no homework" }, 400);
     const rate = Math.round(t.done / t.total * 100);
-    const delta = rate === 100 ? 1 : -1;
-    const reason = `숙제 정산 ${date}: ${rate}% → ${delta > 0 ? "+1" : "-1"}`;
+    const isFull = rate === 100;
+    const track = isFull ? "reward" : "penalty";
+    const reason = isFull
+      ? `숙제 정산 ${date}: 100% → 적립 +1`
+      : `숙제 정산 ${date}: ${rate}% → 벌점 +1`;
     let ledgerId = null;
     try {
       const led = await env.DB.prepare(
-        "INSERT INTO point_ledger (delta, reason, type, track, created_at) VALUES (?, ?, ?, 'reward', ?)"
-      ).bind(delta, reason, delta > 0 ? "merit" : "demerit", nowKST()).run();
+        "INSERT INTO point_ledger (delta, reason, type, track, created_at) VALUES (1, ?, ?, ?, ?)"
+      ).bind(reason, isFull ? "merit" : "demerit", track, nowKST()).run();
       ledgerId = led.meta?.last_row_id ?? null;
     } catch (e) {
       return json({ error: "point_ledger not ready" }, 500);
     }
     await env.DB.prepare(
-      "INSERT INTO hw_settle (date, rate, delta, ledger_id, settled_at) VALUES (?, ?, ?, ?, ?)"
-    ).bind(date, rate, delta, ledgerId, nowKST()).run();
-    return json({ ok: true, rate, delta });
+      "INSERT INTO hw_settle (date, rate, delta, ledger_id, settled_at) VALUES (?, ?, 1, ?, ?)"
+    ).bind(date, rate, ledgerId, nowKST()).run();
+    return json({ ok: true, rate, track });
   }
 
   // 집행 취소: 적립 되돌리고 동결 해제
